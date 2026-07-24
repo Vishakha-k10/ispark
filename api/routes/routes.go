@@ -76,6 +76,14 @@ func SetupRoutes(app *fiber.App) {
 	admin.Post("/certificates/:id/approve", controllers.ApproveCertificate)
 	admin.Post("/certificates/:id/reject", controllers.RejectCertificate)
 
+	// Activity Monitoring API
+	admin.Get("/monitoring/stats", controllers.GetActivityMonitoringStats)
+	admin.Get("/monitoring/activities", controllers.GetMonitoredActivities)
+	admin.Put("/monitoring/activities/:id", controllers.UpdateMonitoredActivity)
+	admin.Get("/monitoring/insights", controllers.GetMonitoringInsights)
+	admin.Get("/monitoring/attention-students", controllers.GetStudentsRequiringAttention)
+	admin.Post("/monitoring/send-reminder", controllers.SendActivityMonitoringReminder)
+
 	// Platform-wide routes, super admin only
 	platform := admin.Group("/platform", middleware.RoleRequired("superadmin"))
 	platform.Get("/stats", controllers.GetPlatformStats)

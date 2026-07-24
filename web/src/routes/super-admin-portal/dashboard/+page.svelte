@@ -1491,7 +1491,12 @@
 					<p
 						class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mt-0.5"
 					>
-						Tuesday, 23 June 2026
+						{new Date().toLocaleDateString('en-US', {
+							weekday: 'long',
+							day: 'numeric',
+							month: 'long',
+							year: 'numeric'
+						})}
 					</p>
 				</div>
 			</div>
