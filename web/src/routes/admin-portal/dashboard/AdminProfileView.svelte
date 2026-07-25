@@ -212,16 +212,8 @@
 </script>
 
 <div class="space-y-6 font-sans" transition:fade={{ duration: 150 }}>
-	<!-- Page Title Header -->
-	<div class="space-y-1">
-		<h2 class="text-2xl font-bold font-serif text-slate-900 leading-tight">My Profile</h2>
-		<p class="text-xs text-slate-500 font-semibold">
-			Manage your professional profile and administrative account
-		</p>
-	</div>
-
 	<!-- Profile Header Card -->
-	<div class="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-xs relative">
+	<div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm relative">
 		{#if loading}
 			<!-- Loading State Skeleton -->
 			<div class="flex flex-col md:flex-row items-center gap-6 animate-pulse">
@@ -262,7 +254,7 @@
 			<div class="flex flex-col md:flex-row items-start gap-6">
 				<!-- Left: Circular Avatar -->
 				<div
-					class="w-24 h-24 rounded-full bg-[#0B1535] text-white flex items-center justify-center font-bold text-3xl border-4 border-slate-100 shadow-md shrink-0 relative overflow-hidden font-serif select-none"
+					class="w-24 h-24 rounded-full bg-[#881B1B] text-white flex items-center justify-center font-bold text-3xl border-4 border-slate-100 shadow-md shrink-0 relative overflow-hidden font-serif select-none"
 				>
 					{getInitials(admin.name)}
 				</div>
@@ -270,7 +262,7 @@
 				<!-- Center: Info Fields -->
 				<div class="flex-grow space-y-4 w-full">
 					<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-						<h3 class="text-2xl font-bold text-[#0B1535] font-serif leading-none">
+						<h3 class="text-2xl font-bold text-slate-900 font-serif leading-none">
 							{admin.name}
 						</h3>
 
@@ -280,7 +272,7 @@
 							<button
 								type="button"
 								onclick={onEditProfile}
-								class="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-slate-250 bg-white hover:bg-slate-50 text-slate-800 rounded-lg text-xs font-bold transition-colors shadow-3xs cursor-pointer focus:outline-none"
+								class="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-[#881B1B]/30 bg-white hover:bg-[#881B1B]/5 text-[#881B1B] rounded-lg text-xs font-bold transition-colors shadow-3xs cursor-pointer focus:outline-none"
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -288,7 +280,7 @@
 									viewBox="0 0 24 24"
 									stroke-width="2.2"
 									stroke="currentColor"
-									class="w-3.5 h-3.5 text-slate-500"
+									class="w-3.5 h-3.5 text-[#881B1B]"
 								>
 									<path
 										stroke-linecap="round"
@@ -303,7 +295,7 @@
 							<button
 								type="button"
 								onclick={openChangePassword}
-								class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0B1535] hover:bg-[#1a2b5e] text-white rounded-lg text-xs font-bold transition-colors shadow-3xs cursor-pointer focus:outline-none"
+								class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#881B1B] hover:bg-[#881B1B]/90 text-white rounded-lg text-xs font-bold transition-colors shadow-3xs cursor-pointer focus:outline-none"
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -316,7 +308,7 @@
 									<path
 										stroke-linecap="round"
 										stroke-linejoin="round"
-										d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 00 2.25 2.25z"
+										d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
 									/>
 								</svg>
 								Change Password
@@ -339,7 +331,7 @@
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
-									d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
+									d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z"
 								/>
 							</svg>
 							<div class="flex items-center gap-1.5">
@@ -383,7 +375,7 @@
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
-									d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068"
+									d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
 								/>
 							</svg>
 							<div class="flex items-center gap-1.5">
@@ -425,139 +417,50 @@
 
 	<!-- Administrative Overview Row (DB-backed statistics only) -->
 	{#if !loading && !error && admin}
-		<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs flex flex-col mb-6">
-			<h3 class="text-xs font-bold text-slate-405 tracking-wider uppercase font-sans mb-5">
-				Administrative Overview
-			</h3>
+		<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+			<h2 class="font-serif font-bold text-sm text-slate-900">Administrative Overview</h2>
+			<p class="text-xs text-slate-400 mt-0.5">Key metrics for your administrative activity</p>
 
 			<!-- Stats Content -->
-			<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-grow">
+			<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
 				<!-- Assigned Students -->
 				<div
-					class="bg-slate-50 border border-slate-150 rounded-xl p-4 flex flex-col items-center text-center justify-center hover:shadow-2xs transition-shadow"
+					class="rounded-xl border border-blue-200 bg-blue-50 p-4 hover:shadow-sm transition-shadow"
 				>
-					<div
-						class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-							stroke="currentColor"
-							class="w-4 h-4"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 21c-2.316 0-4.445-.69-6.22-1.879v-.003a4.125 4.125 0 0 1 7.533-2.493M15 19.128v-.003c0-1.112-.285-2.16-.786-3.07M14.214 16.058A9.396 9.396 0 0 0 10.089 15c-1.47 0-2.854.34-4.082.945"
-							/>
-						</svg>
-					</div>
-					<span class="text-2xl font-bold font-serif text-slate-900 mt-3 leading-none">
+					<p class="text-xs text-slate-600 leading-snug">Assigned Students</p>
+					<p class="mt-3 text-3xl font-bold font-serif text-blue-600">
 						{stats?.assigned_students ?? 0}
-					</span>
-					<span
-						class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-2 leading-tight"
-					>
-						Assigned Students
-					</span>
+					</p>
 				</div>
 
 				<!-- Certificates Verified -->
 				<div
-					class="bg-slate-50 border border-slate-150 rounded-xl p-4 flex flex-col items-center text-center justify-center hover:shadow-2xs transition-shadow"
+					class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 hover:shadow-sm transition-shadow"
 				>
-					<div
-						class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-							stroke="currentColor"
-							class="w-4 h-4"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
-							/>
-						</svg>
-					</div>
-					<span class="text-2xl font-bold font-serif text-slate-900 mt-3 leading-none">
+					<p class="text-xs text-slate-600 leading-snug">Certificates Verified</p>
+					<p class="mt-3 text-3xl font-bold font-serif text-emerald-600">
 						{stats?.verified_certificates ?? 0}
-					</span>
-					<span
-						class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-2 leading-tight"
-					>
-						Certificates Verified
-					</span>
+					</p>
 				</div>
 
 				<!-- Pending Reviews -->
 				<div
-					class="bg-slate-50 border border-slate-150 rounded-xl p-4 flex flex-col items-center text-center justify-center hover:shadow-2xs transition-shadow"
+					class="rounded-xl border border-amber-200 bg-amber-50 p-4 hover:shadow-sm transition-shadow"
 				>
-					<div
-						class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-							stroke="currentColor"
-							class="w-4 h-4"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-							/>
-						</svg>
-					</div>
-					<span class="text-2xl font-bold font-serif text-slate-900 mt-3 leading-none">
+					<p class="text-xs text-slate-600 leading-snug">Pending Reviews</p>
+					<p class="mt-3 text-3xl font-bold font-serif text-amber-600">
 						{stats?.pending_reviews ?? 0}
-					</span>
-					<span
-						class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-2 leading-tight"
-					>
-						Pending Reviews
-					</span>
+					</p>
 				</div>
 
 				<!-- Activities Supervised -->
 				<div
-					class="bg-slate-50 border border-slate-150 rounded-xl p-4 flex flex-col items-center text-center justify-center hover:shadow-2xs transition-shadow"
+					class="rounded-xl border border-rose-200 bg-rose-50 p-4 hover:shadow-sm transition-shadow"
 				>
-					<div
-						class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-							stroke="currentColor"
-							class="w-4 h-4"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"
-							/>
-						</svg>
-					</div>
-					<span class="text-2xl font-bold font-serif text-slate-900 mt-3 leading-none">
+					<p class="text-xs text-slate-600 leading-snug">Activities Supervised</p>
+					<p class="mt-3 text-3xl font-bold font-serif text-[#881B1B]">
 						{stats?.supervised_activities ?? 0}
-					</span>
-					<span
-						class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-2 leading-tight"
-					>
-						Activities Supervised
-					</span>
+					</p>
 				</div>
 			</div>
 		</div>
@@ -566,32 +469,38 @@
 	<!-- Assigned Batches Row -->
 	{#if !loading && !error && admin}
 		<!-- Assigned Batches Card -->
-		<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs flex flex-col">
-			<h3 class="text-xs font-bold text-slate-405 tracking-wider uppercase font-sans mb-5">
-				Assigned Batches
-			</h3>
+		<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+			<h2 class="font-serif font-bold text-sm text-slate-900">Assigned Batches</h2>
+			<p class="text-xs text-slate-400 mt-0.5">Batches currently under your coordination</p>
 
-			<div class="flex-grow overflow-x-auto">
+			<div class="flex-grow overflow-x-auto mt-4">
 				<table class="w-full text-left text-xs border-collapse">
 					<thead>
-						<tr
-							class="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-						>
-							<th class="pb-3 font-semibold">Batch</th>
-							<th class="pb-3 font-semibold">Course</th>
-							<th class="pb-3 font-semibold">Semester</th>
-							<th class="pb-3 font-semibold text-right">Students</th>
+						<tr class="border-b border-slate-200">
+							<th class="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wide"
+								>Batch</th
+							>
+							<th class="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wide"
+								>Course</th
+							>
+							<th class="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wide"
+								>Semester</th
+							>
+							<th
+								class="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wide text-right"
+								>Students</th
+							>
 						</tr>
 					</thead>
 					<tbody>
 						{#if statsLoading}
 							<!-- Loading Rows -->
 							{#each Array(2) as _}
-								<tr class="animate-pulse border-b border-slate-50 last:border-b-0">
-									<td class="py-3.5"><div class="h-4 bg-slate-200 rounded w-16"></div></td>
-									<td class="py-3.5"><div class="h-4 bg-slate-200 rounded w-12"></div></td>
-									<td class="py-3.5"><div class="h-4 bg-slate-200 rounded w-20"></div></td>
-									<td class="py-3.5 text-right"
+								<tr class="animate-pulse border-b border-slate-100 last:border-b-0">
+									<td class="px-5 py-3.5"><div class="h-4 bg-slate-200 rounded w-16"></div></td>
+									<td class="px-5 py-3.5"><div class="h-4 bg-slate-200 rounded w-12"></div></td>
+									<td class="px-5 py-3.5"><div class="h-4 bg-slate-200 rounded w-20"></div></td>
+									<td class="px-5 py-3.5 text-right"
 										><div class="h-4 bg-slate-200 rounded w-16 ml-auto"></div></td
 									>
 								</tr>
@@ -599,7 +508,7 @@
 						{:else if statsError || assignedBatches.length === 0}
 							<!-- Empty state placeholder -->
 							<tr>
-								<td colspan="4" class="py-12 text-center text-slate-400 font-medium font-sans">
+								<td colspan="4" class="px-5 py-12 text-center text-slate-400 font-medium font-sans">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										fill="none"
@@ -619,11 +528,11 @@
 							</tr>
 						{:else}
 							{#each assignedBatches as b}
-								<tr class="border-b border-slate-50 last:border-b-0 font-semibold text-slate-800">
-									<td class="py-3.5 text-slate-900 font-bold">{b.batch}</td>
-									<td class="py-3.5 text-slate-500">{b.course}</td>
-									<td class="py-3.5 text-slate-500">{b.semester}</td>
-									<td class="py-3.5 text-right">
+								<tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
+									<td class="px-5 py-3.5 text-sm font-bold text-slate-900">{b.batch}</td>
+									<td class="px-5 py-3.5 text-sm text-slate-700">{b.course}</td>
+									<td class="px-5 py-3.5 text-sm text-slate-700">{b.semester}</td>
+									<td class="px-5 py-3.5 text-right">
 										<span
 											class="px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-md text-[10px] font-bold"
 										>
@@ -683,7 +592,7 @@
 						type="password"
 						bind:value={currentPassword}
 						disabled={isPasswordSubmitting}
-						class="w-full px-3 py-2 border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-slate-350 rounded-lg text-sm focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400 transition-colors"
+						class="w-full px-3 py-2 border border-slate-200 focus:border-[#881B1B]/50 focus:ring-1 focus:ring-[#881B1B]/40 rounded-lg text-sm focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400 transition-colors"
 					/>
 				</div>
 
@@ -698,7 +607,7 @@
 						type="password"
 						bind:value={newPassword}
 						disabled={isPasswordSubmitting}
-						class="w-full px-3 py-2 border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-slate-350 rounded-lg text-sm focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400 transition-colors"
+						class="w-full px-3 py-2 border border-slate-200 focus:border-[#881B1B]/50 focus:ring-1 focus:ring-[#881B1B]/40 rounded-lg text-sm focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400 transition-colors"
 					/>
 				</div>
 
@@ -713,7 +622,7 @@
 						type="password"
 						bind:value={confirmPassword}
 						disabled={isPasswordSubmitting}
-						class="w-full px-3 py-2 border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-slate-350 rounded-lg text-sm focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400 transition-colors"
+						class="w-full px-3 py-2 border border-slate-200 focus:border-[#881B1B]/50 focus:ring-1 focus:ring-[#881B1B]/40 rounded-lg text-sm focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400 transition-colors"
 					/>
 				</div>
 
@@ -729,7 +638,7 @@
 					<button
 						type="submit"
 						disabled={isPasswordSubmitting}
-						class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0B1535] hover:bg-[#1a2b5e] disabled:bg-[#0b1535]/50 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer focus:outline-none"
+						class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#881B1B] hover:bg-[#881B1B]/90 disabled:bg-[#881B1B]/50 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer focus:outline-none"
 					>
 						{#if isPasswordSubmitting}
 							<svg

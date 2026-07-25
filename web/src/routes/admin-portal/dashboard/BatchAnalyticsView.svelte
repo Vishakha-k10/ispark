@@ -75,7 +75,7 @@
 		batch:
 			'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
 		student_progress:
-			'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0110.089 21c-2.316 0-4.445-.69-6.22-1.879v-.003a4.125 4.125 0 017.533-2.493M15 19.128v-.003c0-1.112-.285-2.16-.786-3.07M14.214 16.058A9.396 9.396 0 0010.089 15c-1.47 0-2.854.34-4.082.945M14.214 16.058a9.386 9.386 0 010 3.07M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5',
+    		'M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198v-.001c0-.656-.126-1.283-.356-1.858M15 19.128v-.001c0-.656-.126-1.283-.356-1.858A6.002 6.002 0 009 15.75H5.25A3.75 3.75 0 001.5 19.5v.75h13.5v-.75c0-.129-.007-.257-.02-.384M12.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zm6 3a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
 		compliance:
 			'M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
 		certificate_verification:
@@ -300,26 +300,27 @@
 		}
 	}
 
+	// Updated to match the pill badge design in the reference image
 	function statusStyles(status: string) {
 		if (status === 'Excellent')
 			return {
-				pill: 'bg-emerald-50 text-emerald-700',
-				dot: 'bg-emerald-500',
+				pill: 'bg-emerald-50/80 text-emerald-800 border border-emerald-200/60',
+				dot: 'bg-emerald-600',
 				bar: 'bg-emerald-500',
-				text: 'text-emerald-600'
+				text: 'text-emerald-800'
 			};
 		if (status === 'Good')
 			return {
-				pill: 'bg-blue-50 text-blue-700',
-				dot: 'bg-blue-500',
+				pill: 'bg-blue-50/80 text-blue-700 border border-blue-200/60',
+				dot: 'bg-blue-600',
 				bar: 'bg-blue-500',
-				text: 'text-blue-600'
+				text: 'text-blue-700'
 			};
 		return {
-			pill: 'bg-amber-50 text-amber-700',
+			pill: 'bg-amber-50/80 text-amber-900 border border-amber-200/60',
 			dot: 'bg-amber-500',
 			bar: 'bg-amber-500',
-			text: 'text-amber-600'
+			text: 'text-amber-900'
 		};
 	}
 
@@ -362,59 +363,84 @@
 		</div>
 	{:else}
 		<!-- ================= Summary cards ================= -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-			<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-				<div class="w-10 h-10 rounded-lg bg-[#881B1B]/10 flex items-center justify-center">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						stroke-width="2"
-						class="w-5 h-5 text-[#881B1B]"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0"
-						/>
-					</svg>
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+			<!-- Card 1: Assigned Batches -->
+		<div
+			class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
+		>
+				<div class="flex items-center justify-between">
+				<span class="text-2xl font-bold font-serif text-slate-900">{summary.assignedBatches}</span>
+				<div class="p-2.5 rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+								stroke-width="2"
+							stroke="currentColor"
+						class="w-5 h-5"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0"
+							/>
+						</svg>
+					</div>
 				</div>
-				<p class="mt-3 text-2xl font-bold font-serif text-slate-900">{summary.assignedBatches}</p>
-				<p class="mt-1 text-xs font-bold text-slate-700">Assigned Batches</p>
+			<div class="mt-4">
+					<h3 class="text-xs font-bold text-slate-900 capitalize">Assigned Batches</h3>
+				<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
+					>CURRENTLY ACTIVE</span
+				>
+			</div>
 			</div>
 
-			<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-				<div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						stroke-width="2"
-						class="w-5 h-5 text-blue-600"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0110.089 21c-2.316 0-4.445-.69-6.22-1.879v-.003a4.125 4.125 0 017.533-2.493M15 19.128v-.003c0-1.112-.285-2.16-.786-3.07M14.214 16.058A9.396 9.396 0 0010.089 15c-1.47 0-2.854.34-4.082.945M14.214 16.058a9.386 9.386 0 010 3.07M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-						/>
-					</svg>
+			<!-- Card 2: Total Students -->
+		<div
+			class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
+		>
+				<div class="flex items-center justify-between">
+				<span class="text-2xl font-bold font-serif text-slate-900">{summary.totalStudents}</span>
+				<div class="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+								stroke-width="2"
+							stroke="currentColor"
+						class="w-5 h-5"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
+							/>
+						</svg>
+					</div>
 				</div>
-				<p class="mt-3 text-2xl font-bold font-serif text-slate-900">{summary.totalStudents}</p>
-				<p class="mt-1 text-xs font-bold text-slate-700">Total Students</p>
-				<p class="text-xs text-slate-400">Across assigned batches</p>
+			<div class="mt-4">
+					<h3 class="text-xs font-bold text-slate-900 capitalize">Total Students</h3>
+					<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
+					>ACROSS BATCHES</span
+				>
+			</div>
 			</div>
 
-			<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-				<div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+		<!-- Card 3: Compliant Students -->
+		<div
+			class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
+		>
+			<div class="flex items-center justify-between">
+				<span class="text-2xl font-bold font-serif text-slate-900">{summary.compliantStudents}</span
+				>
+				<div class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
 						viewBox="0 0 24 24"
-						stroke="currentColor"
 						stroke-width="2"
-						class="w-5 h-5 text-emerald-600"
+						stroke="currentColor"
+						class="w-5 h-5"
 					>
 						<path
 							stroke-linecap="round"
@@ -423,20 +449,29 @@
 						/>
 					</svg>
 				</div>
-				<p class="mt-3 text-2xl font-bold font-serif text-slate-900">{summary.compliantStudents}</p>
-				<p class="mt-1 text-xs font-bold text-slate-700">Compliant Students</p>
-				<p class="text-xs text-slate-400">Completed semester requirements</p>
 			</div>
+			<div class="mt-4">
+				<h3 class="text-xs font-bold text-slate-900 capitalize">Compliant Students</h3>
+				<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
+					>MET REQUIREMENTS</span
+				>
+			</div>
+		</div>
 
-			<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-				<div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center">
+		<!-- Card 4: Defaulters -->
+		<div
+			class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
+		>
+			<div class="flex items-center justify-between">
+				<span class="text-2xl font-bold font-serif text-[#881B1B]">{summary.defaulters}</span>
+				<div class="p-2.5 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
 						viewBox="0 0 24 24"
-						stroke="currentColor"
 						stroke-width="2"
-						class="w-5 h-5 text-[#881B1B]"
+						stroke="currentColor"
+						class="w-5 h-5"
 					>
 						<path
 							stroke-linecap="round"
@@ -445,11 +480,15 @@
 						/>
 					</svg>
 				</div>
-				<p class="mt-3 text-2xl font-bold font-serif text-[#881B1B]">{summary.defaulters}</p>
-				<p class="mt-1 text-xs font-bold text-slate-700">Defaulters</p>
-				<p class="text-xs text-slate-400">Require mentor intervention</p>
+			</div>
+			<div class="mt-4">
+				<h3 class="text-xs font-bold text-slate-900 capitalize">Defaulters</h3>
+				<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
+					>NEEDS ATTENTION</span
+				>
 			</div>
 		</div>
+	</div>
 
 		<!-- ================= Batch performance table ================= -->
 		<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -548,9 +587,9 @@
 								<td class="px-5 py-3.5 text-sm text-slate-500">{batch.pendingCerts}</td>
 								<td class="px-5 py-3.5">
 									<span
-										class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold {styles.pill}"
+										class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide {styles.pill}"
 									>
-										<span class="w-1.5 h-1.5 rounded-full {styles.dot}"></span>
+										<span class="w-2 h-2 rounded-full shrink-0 {styles.dot}"></span>
 										{batch.status}
 									</span>
 								</td>
@@ -586,7 +625,7 @@
 											type="button"
 											onclick={() => openEdit(batch)}
 											aria-label="Edit {batch.name}"
-											class="w-7 h-7 rounded-md bg-slate-900 text-white flex items-center justify-center hover:bg-slate-800 transition-colors"
+											class="w-7 h-7 rounded-md bg-[#881B1B]/10 text-[#881B1B] flex items-center justify-center hover:bg-[#881B1B]/20 transition-colors"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -664,28 +703,28 @@
 					Track student completion across both development tracks
 				</p>
 
-				<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
-					{#each requirements as req}
-						{@const tone =
-							req.tone === 'emerald'
-								? { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' }
-								: req.tone === 'amber'
-									? { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' }
-									: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-[#881B1B]' }}
-						<div class="rounded-xl border {tone.border} {tone.bg} p-4">
-							<p class="text-xs text-slate-600 leading-snug">{req.label}</p>
-							<p class="mt-3 text-2xl font-bold font-serif {tone.text}">{req.count}</p>
-							<p class="text-xs text-slate-400">Students</p>
-						</div>
-					{/each}
+		<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+			{#each requirements as req}
+				{@const tone =
+					req.tone === 'emerald'
+						? { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' }
+						: req.tone === 'amber'
+							? { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' }
+							: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-[#881B1B]' }}
+				<div
+					class="rounded-xl border {tone.border} {tone.bg} p-4 hover:shadow-sm transition-shadow"
+				>
+					<p class="text-xs text-slate-600 leading-snug">{req.label}</p>
+					<p class="mt-3 text-2xl font-bold font-serif {tone.text}">{req.count}</p>
+					<p class="text-xs text-slate-400">Students</p>
 				</div>
-			</div>
-		{/if}
-
-		<!-- ================= Reports ================= -->
-		<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-			<h2 class="font-serif font-bold text-sm text-slate-900">Reports</h2>
-			<p class="text-xs text-slate-400 mt-0.5">Export batch data and compliance records</p>
+			{/each}
+		</div>
+	</div>
+{/if}
+	<!-- ================= Reports ================= -->
+	<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+		<h2 class="font-serif font-bold text-sm text-slate-900">Reports</h2>
 
 			<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
 				{#each reports as report}
@@ -882,7 +921,7 @@
 			<div class="flex justify-end px-6 py-4 border-t border-slate-200">
 				<button
 					onclick={closeView}
-					class="px-5 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors"
+					class="px-5 py-2 rounded-lg bg-[#881B1B] text-white text-xs font-bold hover:bg-[#881B1B]/90 transition-colors"
 				>
 					Close Overview
 				</button>

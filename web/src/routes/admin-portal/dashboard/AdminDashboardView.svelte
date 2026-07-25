@@ -315,7 +315,7 @@
 		<div class="flex items-center justify-between">
 			<span class="text-2xl font-bold font-serif text-slate-900">{stats.total_students}</span>
 			<div class="p-2.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
-				<!-- People Group Icon -->
+				<!-- Users Icon -->
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
@@ -327,7 +327,7 @@
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 21c-2.316 0-4.445-.69-6.22-1.879v-.003a4.125 4.125 0 0 1 7.533-2.493M15 19.128v-.003c0-1.112-.285-2.16-.786-3.07M14.214 16.058A9.396 9.396 0 0 0 10.089 15c-1.47 0-2.854.34-4.082.945M14.214 16.058a9.386 9.386 0 0 1 0 3.07M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+						d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
 					/>
 				</svg>
 			</div>
@@ -368,7 +368,7 @@
 			<h3 class="text-xs font-bold text-slate-800 tracking-wide font-sans">
 				Pending Certificate Reviews
 			</h3>
-			<p class="text-[10px] font-bold text-slate-405 mt-1 uppercase tracking-wider">
+			<p class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
 				{pendingCertificates.length > 0
 					? `${pendingCertificates.filter((c) => c.priority === 'High').length} marked urgent`
 					: 'All caught up!'}
@@ -417,7 +417,7 @@
 				>{(stats?.average_credits ?? 0).toFixed(1)}</span
 			>
 			<div class="p-2.5 rounded-lg bg-teal-50 text-teal-600 border border-teal-100">
-				<!-- Arrow Up Icon -->
+				<!-- Shield Check Icon -->
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
@@ -429,7 +429,7 @@
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"
+						d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"
 					/>
 				</svg>
 			</div>
@@ -450,9 +450,6 @@
 		<div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/20">
 			<div>
 				<h2 class="text-sm font-bold font-serif text-inst-navy">Recent Activity Submissions</h2>
-				<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-					Latest submissions from registered students
-				</p>
 			</div>
 		</div>
 
@@ -502,9 +499,6 @@
 	<div class="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
 		<div>
 			<h2 class="text-sm font-bold font-serif text-inst-navy">Quick Actions</h2>
-			<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-				Navigate directly to administration tasks
-			</p>
 		</div>
 
 		<div class="grid grid-cols-2 gap-3.5 pt-2">
@@ -627,9 +621,6 @@
 <section class="bg-white border border-slate-200 p-5 rounded-xl shadow-xs space-y-4">
 	<div>
 		<h2 class="text-sm font-bold font-serif text-inst-navy">Student Progress Summary</h2>
-		<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-			Cohort credit completion statistics overview
-		</p>
 	</div>
 
 	<div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center pt-2">
@@ -777,11 +768,11 @@
 							</td>
 							<td class="py-3.5 px-5">
 								<div class="flex items-center justify-center gap-2">
-									<!-- View Button (eyeball) -->
+									<!-- View Button (Matching reference icon & pill style) -->
 									<button
 										onclick={() => openModal(cert)}
 										aria-label="View Certificate"
-										class="p-2 border border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors focus:outline-none"
+										class="p-2.5 bg-[#881B1B]/10 hover:bg-[#881B1B]/20 text-[#881B1B] rounded-xl transition-colors focus:outline-none"
 									>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
