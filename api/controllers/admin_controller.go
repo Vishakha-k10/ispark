@@ -45,7 +45,7 @@ func checkAndRecordLoginAttempt(key string) error {
 
 	if attempt.lockoutUntil.After(now) {
 		remaining := time.Until(attempt.lockoutUntil).Round(time.Second)
-		return fmt.Errorf("Too many failed login attempts. Account locked. Try again in %v", remaining)
+		return fmt.Errorf("too many failed login attempts: account locked; try again in %v", remaining)
 	}
 
 	return nil

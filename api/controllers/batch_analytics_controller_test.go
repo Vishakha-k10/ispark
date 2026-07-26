@@ -63,7 +63,7 @@ func TestBatchAnalyticsOverview(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/admin/batch-analytics", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 
-		resp, err := app.Test(req)
+		resp, err := app.Test(req, 10000)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -96,7 +96,7 @@ func TestBatchAnalyticsOverview(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/admin/batch-analytics/IT2K24", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 
-		resp, err := app.Test(req)
+		resp, err := app.Test(req, 10000)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -126,7 +126,7 @@ func TestBatchAnalyticsOverview(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		req.Header.Set("Content-Type", "application/json")
 
-		resp, err := app.Test(req)
+		resp, err := app.Test(req, 10000)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -140,7 +140,7 @@ func TestBatchAnalyticsOverview(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/admin/batch-analytics/reports/export?type=batch", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 
-		resp, err := app.Test(req)
+		resp, err := app.Test(req, 10000)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}

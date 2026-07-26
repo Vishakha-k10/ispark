@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -19,43 +18,33 @@ import (
 	"github.com/iips-oss/ispark/api/routes"
 	"github.com/iips-oss/ispark/api/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
-
-var testDBOnce sync.Once
 
 // SetupTestDB initializes an in-memory SQLite database for testing and overrides config.DB
 func SetupTestDB(t *testing.T) {
 	t.Setenv("TESTING", "true")
-	testDBOnce.Do(func() {
-		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-		if err != nil {
-			t.Fatalf("Failed to connect to in-memory SQLite database: %v", err)
-		}
-		config.DB = db
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
-
-	if config.DB != nil {
-		_ = config.DB.AutoMigrate(
-			&models.Student{},
-			&models.OTP{},
-			&models.Admin{},
-			&models.Activity{},
-			&models.Certificate{},
-			&models.Enrollment{},
-			&models.BatchOverride{},
-			&models.GeneratedReport{},
-			&models.ScheduledReport{},
-			&models.ReportAuditLog{},
-		)
-
-		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Student{})
-		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.OTP{})
-		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Admin{})
-		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Activity{})
-		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Certificate{})
-		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Enrollment{})
-		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.BatchOverride{})
+	if err != nil {
+		t.Fatalf("Failed to connect to in-memory SQLite database: %v", err)
 	}
+	config.DB = db
+
+	_ = config.DB.AutoMigrate(
+		&models.Student{},
+		&models.OTP{},
+		&models.Admin{},
+		&models.Activity{},
+		&models.Certificate{},
+		&models.Enrollment{},
+		&models.Track{},
+		&models.BatchOverride{},
+		&models.GeneratedReport{},
+		&models.ScheduledReport{},
+		&models.ReportAuditLog{},
+	)
 }
 
 // Helper to solve the simple math captcha challenge
@@ -431,16 +420,7 @@ func TestInactiveAndFirstLoginFlows(t *testing.T) {
 	t.Setenv("JWT_SECRET", strings.Repeat("test-jwt-", 4))
 	t.Setenv("JWT_REFRESH_SECRET", strings.Repeat("test-refresh-jwt-", 4))
 
-	// Initialize test DB
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to connect to DB: %v", err)
-	}
-	err = db.AutoMigrate(&models.Student{}, &models.OTP{}, &models.Admin{})
-	if err != nil {
-		t.Fatalf("Failed to run migrations: %v", err)
-	}
-	config.DB = db
+	SetupTestDB(t)
 
 	app := fiber.New()
 	routes.SetupRoutes(app)
@@ -671,16 +651,7 @@ func TestEmailValidationAndAdminStatus(t *testing.T) {
 	t.Setenv("JWT_SECRET", strings.Repeat("test-jwt-", 4))
 	t.Setenv("JWT_REFRESH_SECRET", strings.Repeat("test-refresh-jwt-", 4))
 
-	// Initialize test DB
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to connect to DB: %v", err)
-	}
-	err = db.AutoMigrate(&models.Student{}, &models.OTP{}, &models.Admin{})
-	if err != nil {
-		t.Fatalf("Failed to run migrations: %v", err)
-	}
-	config.DB = db
+	SetupTestDB(t)
 
 	app := fiber.New()
 	routes.SetupRoutes(app)

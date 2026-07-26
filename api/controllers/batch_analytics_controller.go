@@ -124,13 +124,14 @@ func GetBatchAnalyticsOverview(c *fiber.Ctx) error {
 		pendingCerts := 0
 
 		for _, cert := range s.Certificates {
-			if cert.Status == "Approved" {
+			switch cert.Status {
+			case "Approved":
 				if isPDCategory(cert.ActivityCategory) {
 					pdCredits += cert.Credits
 				} else {
 					sbCredits += cert.Credits
 				}
-			} else if cert.Status == "Pending" {
+			case "Pending":
 				pendingCerts++
 				totalPendingReviews++
 			}
@@ -359,13 +360,14 @@ func GetBatchDetail(c *fiber.Ctx) error {
 		pendingCerts := 0
 
 		for _, cert := range s.Certificates {
-			if cert.Status == "Approved" {
+			switch cert.Status {
+			case "Approved":
 				if isPDCategory(cert.ActivityCategory) {
 					pdCredits += cert.Credits
 				} else {
 					sbCredits += cert.Credits
 				}
-			} else if cert.Status == "Pending" {
+			case "Pending":
 				pendingCerts++
 				totalPending++
 			}
@@ -635,7 +637,7 @@ func ExportBatchReport(c *fiber.Ctx) error {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
-	fileName := "report.csv"
+	var fileName string
 	var rows [][]string
 
 	switch reportType {
@@ -689,13 +691,14 @@ func ExportBatchReport(c *fiber.Ctx) error {
 			batchKey := canonicalBatchName(s.RollNo)
 			pdCredits, sbCredits, pendingCerts := 0, 0, 0
 			for _, cert := range s.Certificates {
-				if cert.Status == "Approved" {
+				switch cert.Status {
+				case "Approved":
 					if isPDCategory(cert.ActivityCategory) {
 						pdCredits += cert.Credits
 					} else {
 						sbCredits += cert.Credits
 					}
-				} else if cert.Status == "Pending" {
+				case "Pending":
 					pendingCerts++
 				}
 			}
