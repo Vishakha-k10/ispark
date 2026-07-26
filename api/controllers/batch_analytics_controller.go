@@ -321,16 +321,25 @@ func GetBatchDetail(c *fiber.Ctx) error {
 		return errJSON(c, fiber.StatusBadRequest, "Batch name parameter is required")
 	}
 
-	var students []models.Student
-	query := config.DB.Model(&models.Student{}).Preload("Certificates").Preload("Enrollments")
-	query, scoped := scopeToAssignedBatch(query, admin)
-
-	if !scoped {
-		return errJSON(c, fiber.StatusNotFound, "Batch not found or unauthorized")
-	}
-
 	// Filter by batch name (e.g. IT2K24 or IT 2024)
 	cleanBatch := strings.ReplaceAll(batchParam, " ", "")
+
+	// Authorization check for batch-scoped admins: require exact batch match
+	if admin.Role == "admin" {
+		if admin.AssignedBatch == "" || !strings.EqualFold(cleanBatch, strings.TrimSpace(admin.AssignedBatch)) {
+			return errJSON(c, fiber.StatusForbidden, "Unauthorized to access this batch")
+		}
+	}
+
+	// Validate that the batch actually exists with at least 1 student
+	var batchCount int64
+	config.DB.Model(&models.Student{}).Where("roll_no LIKE ? AND LENGTH(roll_no) >= ?", cleanBatch+"%", len(cleanBatch)).Count(&batchCount)
+	if batchCount == 0 {
+		return errJSON(c, fiber.StatusNotFound, "Batch not found")
+	}
+
+	var students []models.Student
+	query := config.DB.Model(&models.Student{}).Preload("Certificates").Preload("Enrollments")
 	query = query.Where("roll_no LIKE ?", cleanBatch+"%")
 
 	if err := query.Find(&students).Error; err != nil {
@@ -458,11 +467,18 @@ func UpdateBatchAnalytics(c *fiber.Ctx) error {
 
 	cleanBatch := strings.ReplaceAll(batchParam, " ", "")
 
-	// Verify authorization if admin is batch-scoped
+	// Verify authorization if admin is batch-scoped: require exact match
 	if admin.Role == "admin" {
-		if admin.AssignedBatch == "" || !strings.HasPrefix(strings.ToUpper(cleanBatch), strings.ToUpper(admin.AssignedBatch)) {
+		if admin.AssignedBatch == "" || !strings.EqualFold(cleanBatch, strings.TrimSpace(admin.AssignedBatch)) {
 			return errJSON(c, fiber.StatusForbidden, "Unauthorized to edit this batch")
 		}
+	}
+
+	// Validate that the batch actually exists with at least 1 student
+	var batchCount int64
+	config.DB.Model(&models.Student{}).Where("roll_no LIKE ? AND LENGTH(roll_no) >= ?", cleanBatch+"%", len(cleanBatch)).Count(&batchCount)
+	if batchCount == 0 {
+		return errJSON(c, fiber.StatusNotFound, "Batch not found")
 	}
 
 	var input struct {

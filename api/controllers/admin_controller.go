@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/iips-oss/ispark/api/config"
@@ -20,64 +18,6 @@ func errJSON(c *fiber.Ctx, status int, msg string) error {
 	return c.Status(status).JSON(fiber.Map{"error": msg})
 }
 
-type loginAttempt struct {
-	count        int
-	lockoutUntil time.Time
-}
-
-var (
-	loginAttemptMap = make(map[string]*loginAttempt)
-	loginAttemptMu  sync.Mutex
-)
-
-func checkAndRecordLoginAttempt(key string) error {
-	if os.Getenv("TESTING") == "true" {
-		return nil
-	}
-	loginAttemptMu.Lock()
-	defer loginAttemptMu.Unlock()
-
-	now := time.Now()
-	attempt, exists := loginAttemptMap[key]
-	if !exists {
-		return nil
-	}
-
-	if attempt.lockoutUntil.After(now) {
-		remaining := time.Until(attempt.lockoutUntil).Round(time.Second)
-		return fmt.Errorf("too many failed login attempts: account locked; try again in %v", remaining)
-	}
-
-	return nil
-}
-
-func recordFailedLoginAttempt(key string) {
-	if os.Getenv("TESTING") == "true" {
-		return
-	}
-	loginAttemptMu.Lock()
-	defer loginAttemptMu.Unlock()
-
-	now := time.Now()
-	attempt, exists := loginAttemptMap[key]
-	if !exists {
-		attempt = &loginAttempt{}
-		loginAttemptMap[key] = attempt
-	}
-
-	attempt.count++
-	if attempt.count >= 5 {
-		attempt.lockoutUntil = now.Add(15 * time.Minute)
-		attempt.count = 0
-	}
-}
-
-func resetLoginAttempts(key string) {
-	loginAttemptMu.Lock()
-	defer loginAttemptMu.Unlock()
-	delete(loginAttemptMap, key)
-}
-
 func AdminLogin(c *fiber.Ctx) error {
 	var input models.AdminLoginInput
 	if err := c.BodyParser(&input); err != nil {
@@ -87,25 +27,16 @@ func AdminLogin(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Admin ID and Password are required"})
 	}
 
-	lockoutKey := strings.ToLower(input.AdminID)
-	if err := checkAndRecordLoginAttempt(lockoutKey); err != nil {
-		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": err.Error()})
-	}
-
 	var admin models.Admin
 	if err := config.DB.Where("admin_id = ?", input.AdminID).First(&admin).Error; err != nil {
-		recordFailedLoginAttempt(lockoutKey)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 	if !utils.CheckPasswordHash(input.Password, admin.Password) {
-		recordFailedLoginAttempt(lockoutKey)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 	if admin.Status == "Inactive" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Your account is inactive. Please contact the administrator."})
 	}
-
-	resetLoginAttempts(lockoutKey)
 
 	accessToken, err := utils.GenerateAccessToken(admin.AdminID, admin.Email, admin.Role)
 	if err != nil {
@@ -769,35 +700,13 @@ func AdminDownloadCertificate(c *fiber.Ctx) error {
 		}
 	}
 
-	if _, err := os.Stat(targetPath); err == nil {
-		downloadName := cert.FileName
-		if downloadName == "" {
-			downloadName = filepath.Base(targetPath)
-		}
-		return c.Download(targetPath, downloadName)
+	if _, err := os.Stat(targetPath); err != nil {
+		return errJSON(c, fiber.StatusNotFound, "Certificate file is no longer available on the server")
 	}
 
-	docContent := fmt.Sprintf(
-		"========================================================\n"+
-			"            iSPARK CERTIFICATE DOCUMENT                 \n"+
-			"========================================================\n"+
-			"Certificate ID : %d\n"+
-			"Student Roll No: %s\n"+
-			"Activity Name  : %s\n"+
-			"Category       : %s\n"+
-			"Credits        : %d\n"+
-			"Status         : %s\n"+
-			"Submitted Date : %s\n"+
-			"Organizer      : %s\n"+
-			"Certificate No : %s\n"+
-			"Description    : %s\n"+
-			"========================================================\n",
-		cert.ID, cert.StudentRollNo, cert.ActivityName, cert.ActivityCategory,
-		cert.Credits, cert.Status, cert.CreatedAt.Format("2006-01-02"),
-		cert.OrganizerName, cert.CertNumber, cert.Description,
-	)
-
-	c.Set("Content-Type", "text/plain")
-	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"Certificate_%s_%d.txt\"", cert.StudentRollNo, cert.ID))
-	return c.SendString(docContent)
+	downloadName := cert.FileName
+	if downloadName == "" {
+		downloadName = filepath.Base(targetPath)
+	}
+	return c.Download(targetPath, downloadName)
 }

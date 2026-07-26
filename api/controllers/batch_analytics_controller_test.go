@@ -136,6 +136,36 @@ func TestBatchAnalyticsOverview(t *testing.T) {
 		}
 	})
 
+	t.Run("UpdateBatchAnalytics_PrefixMismatch_Forbidden", func(t *testing.T) {
+		bodyJSON := `{"status":"Excellent","notes":"Batch performing very well"}`
+		req := httptest.NewRequest("PUT", "/api/admin/batch-analytics/IT2K240FAKE", strings.NewReader(bodyJSON))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req, 10000)
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+
+		if resp.StatusCode != http.StatusForbidden {
+			t.Errorf("Expected status 403 Forbidden for prefix-mismatched batch ID, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("GetBatchDetail_NonExistentBatch_NotFound", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/admin/batch-analytics/NONEXISTENT", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req, 10000)
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+
+		if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 403 or 404 for non-existent batch, got %d", resp.StatusCode)
+		}
+	})
+
 	t.Run("ExportBatchReport_Success", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/admin/batch-analytics/reports/export?type=batch", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
