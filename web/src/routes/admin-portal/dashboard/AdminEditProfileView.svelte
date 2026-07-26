@@ -125,7 +125,6 @@
 </script>
 
 <div class="space-y-3 font-sans" transition:fade={{ duration: 150 }}>
-
 	<!-- Form Card -->
 	<div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-sm max-w-2xl">
 		<form onsubmit={handleSubmit} class="space-y-4">

@@ -405,9 +405,7 @@
 		</div>
 		<div class="mt-4">
 			<h3 class="text-xs font-bold text-slate-800 tracking-wide">Approved This Month</h3>
-			<p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-wider">
-				+8 this week
-			</p>
+			<p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-wider">+8 this week</p>
 		</div>
 	</div>
 
