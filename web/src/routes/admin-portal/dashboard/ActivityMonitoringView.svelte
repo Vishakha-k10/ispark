@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { fade, slide } from 'svelte/transition';
-	import { onMount } from 'svelte';
 	import { API_BASE_URL } from '$lib/config';
 
 	// Reactive filter states
@@ -88,13 +87,14 @@
 	interface Toast {
 		id: number;
 		message: string;
+		type?: 'success' | 'error';
 	}
 	let toasts = $state<Toast[]>([]);
 	let toastCounter = 0;
 
-	function triggerToast(message: string) {
+	function triggerToast(message: string, type: 'success' | 'error' = 'success') {
 		const id = toastCounter++;
-		toasts = [...toasts, { id, message }];
+		toasts = [...toasts, { id, message, type }];
 		setTimeout(() => {
 			toasts = toasts.filter((t) => t.id !== id);
 		}, 3500);
@@ -108,38 +108,38 @@
 			});
 			if (res.ok) {
 				const data = await res.json();
-				stats = { ...stats, ...data };
+				stats = data;
 			}
-		} catch (_e) {
-			console.error('Error fetching stats:', _e);
+		} catch {
+			// keep fallback state
 		}
 	}
 
 	async function fetchActivities() {
 		const token = localStorage.getItem('admin_token');
+		loading = true;
 		try {
 			/* eslint-disable-next-line svelte/prefer-svelte-reactivity */
 			const params = new URLSearchParams();
 			if (searchQuery.trim()) params.append('search', searchQuery.trim());
-			if (selectedCategory) params.append('category', selectedCategory);
-			if (selectedStatus) params.append('status', selectedStatus);
-			if (sortBy) params.append('sort_by', sortBy);
+			if (selectedCategory && selectedCategory !== 'All Categories')
+				params.append('category', selectedCategory);
+			if (selectedStatus && selectedStatus !== 'All Statuses')
+				params.append('status', selectedStatus);
+			if (sortBy && sortBy !== 'default') params.append('sort_by', sortBy);
 
-			const res = await fetch(
-				`${API_BASE_URL}/api/admin/monitoring/activities?${params.toString()}`,
-				{
-					headers: token ? { Authorization: `Bearer ${token}` } : {}
-				}
-			);
+			const res = await fetch(`${API_BASE_URL}/api/admin/monitoring/activities?${params}`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			});
+
 			if (res.ok) {
 				const data = await res.json();
-				activities = Array.isArray(data) ? data : [];
-			} else {
-				activities = [];
+				activities = data;
 			}
-		} catch (_e) {
-			console.error('Error fetching activities:', _e);
-			activities = [];
+		} catch {
+			// keep current activities state
+		} finally {
+			loading = false;
 		}
 	}
 
@@ -151,10 +151,10 @@
 			});
 			if (res.ok) {
 				const data = await res.json();
-				insights = { ...insights, ...data };
+				insights = data;
 			}
-		} catch (_e) {
-			console.error('Error fetching insights:', _e);
+		} catch {
+			// keep fallback state
 		}
 	}
 
@@ -166,27 +166,34 @@
 			});
 			if (res.ok) {
 				const data = await res.json();
-				attentionStudents = Array.isArray(data) ? data : [];
-			} else {
-				attentionStudents = [];
+				attentionStudents = data;
 			}
-		} catch (_e) {
-			console.error('Error fetching attention students:', _e);
-			attentionStudents = [];
+		} catch {
+			// keep fallback state
 		}
 	}
 
-	onMount(async () => {
-		loading = true;
-		await Promise.all([fetchStats(), fetchActivities(), fetchInsights(), fetchAttentionStudents()]);
-		loading = false;
+	$effect(() => {
+		fetchStats();
+		fetchActivities();
+		fetchInsights();
+		fetchAttentionStudents();
 	});
+
+	// Derived metrics
+	/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+	let totalRegisteredStudents = $derived(activities.reduce((sum, a) => sum + a.registered, 0));
+	/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+	let totalCompletedStudents = $derived(activities.reduce((sum, a) => sum + a.completed, 0));
+	/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+	let totalCreditsAwarded = $derived(
+		activities.reduce((sum, a) => sum + a.credits * a.completed, 0)
+	);
 
 	// Filter and Sort Computing
 	let filteredActivities = $derived.by(() => {
 		let list = [...activities];
 
-		// Filter by search query
 		if (searchQuery.trim() !== '') {
 			const query = searchQuery.toLowerCase();
 			list = list.filter(
@@ -195,8 +202,7 @@
 			);
 		}
 
-		// Filter by Category
-		if (selectedCategory !== '') {
+		if (selectedCategory !== '' && selectedCategory !== 'All Categories') {
 			const catLower = selectedCategory.toLowerCase();
 			list = list.filter(
 				(act) =>
@@ -205,8 +211,7 @@
 			);
 		}
 
-		// Filter by Status
-		if (selectedStatus !== '') {
+		if (selectedStatus !== '' && selectedStatus !== 'All Statuses') {
 			const statLower = selectedStatus.toLowerCase();
 			list = list.filter(
 				(act) =>
@@ -215,7 +220,6 @@
 			);
 		}
 
-		// Sort by Option
 		if (sortBy === 'credits-desc') {
 			list.sort((a, b) => b.credits - a.credits);
 		} else if (sortBy === 'credits-asc') {
@@ -232,6 +236,14 @@
 
 		return list;
 	});
+
+	/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+	function resetFilters() {
+		searchQuery = '';
+		selectedCategory = 'All Categories';
+		selectedStatus = 'All Statuses';
+		sortBy = 'default';
+	}
 
 	function handleViewActivity(act: ActivityItem) {
 		activeActivity = act;
@@ -269,17 +281,20 @@
 
 			if (res.ok) {
 				const data = await res.json();
-				triggerToast(data.message || `Activity "${activeActivity.name}" updated successfully.`);
+				triggerToast(
+					data.message || `Activity "${activeActivity.name}" updated successfully.`,
+					'success'
+				);
 				await fetchActivities();
 				await fetchStats();
+				isManageModalOpen = false;
 			} else {
 				const errData = await res.json().catch(() => ({}));
-				triggerToast(errData.error || 'Failed to update activity');
+				triggerToast(errData.error || errData.message || 'Failed to update activity', 'error');
 			}
 		} catch {
-			triggerToast(`Activity "${activeActivity.name}" updated successfully.`);
+			triggerToast(`Network error: Failed to update activity "${activeActivity.name}".`, 'error');
 		}
-		isManageModalOpen = false;
 	}
 
 	async function handleSendReminder(student: StudentItem) {
@@ -300,18 +315,16 @@
 
 			if (res.ok) {
 				const data = await res.json();
-				triggerToast(data.message);
+				triggerToast(data.message || `Reminder alert sent to ${student.name}.`, 'success');
 			} else {
 				const errData = await res.json().catch(() => ({}));
 				triggerToast(
-					errData.error ||
-						`Reminder alert sent to ${student.name} (${student.enrollment}) for ${student.activity}.`
+					errData.error || errData.message || `Failed to send reminder alert to ${student.name}`,
+					'error'
 				);
 			}
 		} catch {
-			triggerToast(
-				`Reminder alert sent to ${student.name} (${student.enrollment}) for ${student.activity}.`
-			);
+			triggerToast(`Network error: Failed to send reminder to ${student.name}.`, 'error');
 		}
 	}
 
@@ -333,22 +346,43 @@
 	{#each toasts as toast (toast.id)}
 		<div
 			transition:slide={{ duration: 150 }}
-			class="p-4 bg-slate-800 border border-slate-700 text-white rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold font-sans"
+			class={`p-4 border rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold font-sans ${
+				toast.type === 'error'
+					? 'bg-slate-900 border-rose-500/60 text-rose-200'
+					: 'bg-slate-800 border-slate-700 text-white'
+			}`}
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke="currentColor"
-				class="w-4 h-4 text-accent-gold"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z"
-				/>
-			</svg>
+			{#if toast.type === 'error'}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					class="w-4 h-4 text-rose-400 shrink-0"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+					/>
+				</svg>
+			{:else}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					class="w-4 h-4 text-accent-gold shrink-0"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z"
+					/>
+				</svg>
+			{/if}
 			<span>{toast.message}</span>
 		</div>
 	{/each}
@@ -1284,28 +1318,32 @@
 					<div class="flex flex-col gap-1.5">
 						<label
 							for="edit-registered"
-							class="text-[10px] font-extrabold text-slate-600 tracking-wider"
-							>REGISTERED STUDENTS</label
+							class="text-[10px] font-extrabold text-slate-500 tracking-wider flex items-center gap-1"
+							>REGISTERED STUDENTS (DERIVED)</label
 						>
 						<input
 							id="edit-registered"
 							type="number"
-							bind:value={activeActivity.registered}
-							class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-slate-355"
+							readonly
+							disabled
+							value={activeActivity.registered}
+							class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-500 bg-slate-100/80 cursor-not-allowed select-none focus:outline-none"
 						/>
 					</div>
 
 					<div class="flex flex-col gap-1.5">
 						<label
 							for="edit-completed"
-							class="text-[10px] font-extrabold text-slate-600 tracking-wider"
-							>COMPLETED STUDENTS</label
+							class="text-[10px] font-extrabold text-slate-500 tracking-wider flex items-center gap-1"
+							>COMPLETED STUDENTS (DERIVED)</label
 						>
 						<input
 							id="edit-completed"
 							type="number"
-							bind:value={activeActivity.completed}
-							class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-slate-355"
+							readonly
+							disabled
+							value={activeActivity.completed}
+							class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-500 bg-slate-100/80 cursor-not-allowed select-none focus:outline-none"
 						/>
 					</div>
 				</div>

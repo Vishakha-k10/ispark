@@ -207,6 +207,26 @@
 					};
 				});
 			}
+			// Fetch notifications
+			try {
+				const notifRes = await fetch(`${API_BASE_URL}/api/student/notifications`, {
+					headers: { Authorization: `Bearer ${token}` }
+				});
+				if (notifRes.ok) {
+					const notifData = await notifRes.json();
+					if (notifData && notifData.length > 0) {
+						/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+						notifications = notifData.map((item: any) => ({
+							id: item.id,
+							text: item.text,
+							time: item.time || 'Recently',
+							unread: item.unread !== undefined ? item.unread : true
+						}));
+					}
+				}
+			} catch (notifErr) {
+				console.error('Error loading notifications:', notifErr);
+			}
 		} catch (err) {
 			console.error('Error loading dashboard data:', err);
 		} finally {
@@ -224,8 +244,15 @@
 	let uploading = $state(false);
 	let uploadSuccess = $state(false);
 
-	// Mock Notifications
-	const notifications = [
+	// Notifications state
+	interface NotificationItem {
+		id: number;
+		text: string;
+		time: string;
+		unread: boolean;
+	}
+
+	let notifications = $state<NotificationItem[]>([
 		{
 			id: 1,
 			text: "Your certificate for 'Robotics Workshop' was audited.",
@@ -244,7 +271,7 @@
 			time: '3 days ago',
 			unread: false
 		}
-	];
+	]);
 
 	// Derived activities from backend recent_activities
 	let activities = $derived(

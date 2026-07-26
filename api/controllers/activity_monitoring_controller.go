@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/iips-oss/ispark/api/config"
 	"github.com/iips-oss/ispark/api/models"
+	"gorm.io/gorm"
 )
 
 // MonitoredActivityResponse represents the DTO returned to the frontend for Activity Monitoring.
@@ -64,8 +65,48 @@ type ActivityReminderInput struct {
 	Message           string `json:"message"`
 }
 
+// Helper functions for batch-scoped access
+func isBatchScopedAdmin(admin *models.Admin) bool {
+	return admin.Role == "admin"
+}
+
+func scopeStudentQuery(query *gorm.DB, admin *models.Admin) *gorm.DB {
+	if isBatchScopedAdmin(admin) {
+		if admin.AssignedBatch == "" {
+			return query.Where("1 = 0")
+		}
+		return query.Where("roll_no LIKE ? OR enrollment_no LIKE ?", admin.AssignedBatch+"%", "%"+admin.AssignedBatch+"%")
+	}
+	return query
+}
+
+func scopeCertOrEnrollmentQuery(query *gorm.DB, admin *models.Admin) *gorm.DB {
+	if isBatchScopedAdmin(admin) {
+		if admin.AssignedBatch == "" {
+			return query.Where("1 = 0")
+		}
+		return query.Where("student_roll_no LIKE ?", admin.AssignedBatch+"%")
+	}
+	return query
+}
+
+func isStudentInAdminScope(student *models.Student, admin *models.Admin) bool {
+	if !isBatchScopedAdmin(admin) {
+		return true
+	}
+	if admin.AssignedBatch == "" {
+		return false
+	}
+	return strings.HasPrefix(student.RollNo, admin.AssignedBatch) || strings.Contains(student.EnrollmentNo, admin.AssignedBatch)
+}
+
 // GetActivityMonitoringStats handles GET /api/admin/monitoring/stats
 func GetActivityMonitoringStats(c *fiber.Ctx) error {
+	admin, err := getAuthenticatedAdmin(c)
+	if err != nil {
+		return err
+	}
+
 	var totalMonitored int64
 	if err := config.DB.Model(&models.Activity{}).Count(&totalMonitored).Error; err != nil {
 		return errJSON(c, fiber.StatusInternalServerError, "Failed to count activities")
@@ -86,9 +127,9 @@ func GetActivityMonitoringStats(c *fiber.Ctx) error {
 	}
 
 	var pendingCertificates int64
-	if err := config.DB.Model(&models.Certificate{}).
-		Where("LOWER(status) = ?", "pending").
-		Count(&pendingCertificates).Error; err != nil {
+	pendingCertQuery := scopeCertOrEnrollmentQuery(config.DB.Model(&models.Certificate{}), admin).
+		Where("LOWER(status) = ?", "pending")
+	if err := pendingCertQuery.Count(&pendingCertificates).Error; err != nil {
 		return errJSON(c, fiber.StatusInternalServerError, "Failed to count pending certificates")
 	}
 
@@ -120,7 +161,9 @@ func GetActivityMonitoringStats(c *fiber.Ctx) error {
 
 	var recentCompleted int64
 	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
-	config.DB.Model(&models.Certificate{}).Where("LOWER(status) = ? AND updated_at >= ?", "approved", thirtyDaysAgo).Count(&recentCompleted)
+	recentCompletedQuery := scopeCertOrEnrollmentQuery(config.DB.Model(&models.Certificate{}), admin).
+		Where("LOWER(status) = ? AND updated_at >= ?", "approved", thirtyDaysAgo)
+	recentCompletedQuery.Count(&recentCompleted)
 
 	completedChange := fmt.Sprintf("+%d this month", recentCompleted)
 	if recentCompleted == 0 {
@@ -146,6 +189,11 @@ func GetActivityMonitoringStats(c *fiber.Ctx) error {
 
 // GetMonitoredActivities handles GET /api/admin/monitoring/activities
 func GetMonitoredActivities(c *fiber.Ctx) error {
+	admin, err := getAuthenticatedAdmin(c)
+	if err != nil {
+		return err
+	}
+
 	search := strings.TrimSpace(c.Query("search"))
 	category := strings.TrimSpace(c.Query("category"))
 	status := strings.TrimSpace(c.Query("status"))
@@ -200,7 +248,7 @@ func GetMonitoredActivities(c *fiber.Ctx) error {
 	}
 
 	var stats []enrollmentStat
-	config.DB.Model(&models.Enrollment{}).
+	scopeCertOrEnrollmentQuery(config.DB.Model(&models.Enrollment{}), admin).
 		Select("activity_id, COUNT(*) as total, SUM(CASE WHEN LOWER(status) = 'completed' THEN 1 ELSE 0 END) as completed").
 		Group("activity_id").
 		Scan(&stats)
@@ -216,7 +264,7 @@ func GetMonitoredActivities(c *fiber.Ctx) error {
 		Approved     int
 	}
 	var certStats []certStat
-	config.DB.Model(&models.Certificate{}).
+	scopeCertOrEnrollmentQuery(config.DB.Model(&models.Certificate{}), admin).
 		Select("activity_name, COUNT(*) as approved").
 		Where("LOWER(status) = ?", "approved").
 		Group("activity_name").
@@ -391,8 +439,15 @@ func UpdateMonitoredActivity(c *fiber.Ctx) error {
 
 // GetMonitoringInsights handles GET /api/admin/monitoring/insights
 func GetMonitoringInsights(c *fiber.Ctx) error {
+	admin, err := getAuthenticatedAdmin(c)
+	if err != nil {
+		return err
+	}
+
 	var activities []models.Activity
-	config.DB.Find(&activities)
+	if err := config.DB.Find(&activities).Error; err != nil {
+		return errJSON(c, fiber.StatusInternalServerError, "Failed to fetch activities")
+	}
 
 	mostParticipatedName := "N/A"
 	mostParticipatedCount := 0
@@ -410,10 +465,14 @@ func GetMonitoringInsights(c *fiber.Ctx) error {
 		}
 
 		var regCount int64
-		config.DB.Model(&models.Enrollment{}).Where("activity_id = ?", act.ID).Count(&regCount)
+		scopeCertOrEnrollmentQuery(config.DB.Model(&models.Enrollment{}), admin).
+			Where("activity_id = ?", act.ID).
+			Count(&regCount)
 
 		var compCount int64
-		config.DB.Model(&models.Enrollment{}).Where("activity_id = ? AND LOWER(status) = ?", act.ID, "completed").Count(&compCount)
+		scopeCertOrEnrollmentQuery(config.DB.Model(&models.Enrollment{}), admin).
+			Where("activity_id = ? AND LOWER(status) = ?", act.ID, "completed").
+			Count(&compCount)
 
 		if int(regCount) > mostParticipatedCount {
 			mostParticipatedCount = int(regCount)
@@ -429,28 +488,44 @@ func GetMonitoringInsights(c *fiber.Ctx) error {
 		}
 	}
 
-	// Fallback to default insights if database has empty counts
-	if mostParticipatedName == "N/A" && len(activities) > 0 {
-		mostParticipatedName = activities[0].Name
-		mostParticipatedCount = 120
-	}
-	if highestCreditName == "N/A" && len(activities) > 0 {
-		highestCreditName = activities[0].Name
-		highestCreditVal = activities[0].Credits
-	}
-	if highestCompletionName == "N/A" && len(activities) > 0 {
-		highestCompletionName = activities[0].Name
-		highestCompletionRate = 96
-	}
-
 	var pendingCerts int64
-	config.DB.Model(&models.Certificate{}).Where("LOWER(status) = ?", "pending").Count(&pendingCerts)
-
-	var totalStudents int64
-	config.DB.Model(&models.Student{}).Count(&totalStudents)
+	scopeCertOrEnrollmentQuery(config.DB.Model(&models.Certificate{}), admin).
+		Where("LOWER(status) = ?", "pending").
+		Count(&pendingCerts)
 
 	var pendingActivities int64
-	config.DB.Model(&models.Activity{}).Where("LOWER(status) = ?", "pending verification").Count(&pendingActivities)
+	config.DB.Model(&models.Activity{}).
+		Where("LOWER(status) = ?", "pending verification").
+		Count(&pendingActivities)
+
+	// Fetch students scoped to admin's assigned batch
+	var students []models.Student
+	scopeStudentQuery(config.DB.Preload("Certificates").Preload("Enrollments"), admin).Find(&students)
+
+	belowCreditTarget := 0
+	inactiveStudents := 0
+	const targetCredits = 20
+
+	for _, s := range students {
+		earned := calculateStudentCredits(s)
+		if earned < targetCredits {
+			belowCreditTarget++
+		}
+		if len(s.Enrollments) == 0 && len(s.Certificates) == 0 {
+			inactiveStudents++
+		}
+	}
+
+	// Calculate attention list for students requiring followup
+	attentionList := getAttentionListForStudents(students)
+	followupStudentMap := make(map[string]bool)
+	followupActivityMap := make(map[string]bool)
+	for _, item := range attentionList {
+		followupStudentMap[item.Enrollment] = true
+		if item.Activity != "" {
+			followupActivityMap[item.Activity] = true
+		}
+	}
 
 	return c.JSON(fiber.Map{
 		"most_participated": fiber.Map{
@@ -466,23 +541,33 @@ func GetMonitoringInsights(c *fiber.Ctx) error {
 			"rate": highestCompletionRate,
 		},
 		"students_requiring_followup": fiber.Map{
-			"count":          pendingCerts + 3,
-			"activity_count": 3,
+			"count":          len(followupStudentMap),
+			"activity_count": len(followupActivityMap),
 		},
 		"pending_certificates":      pendingCerts,
-		"below_credit_target":       5,
-		"inactive_students":         3,
+		"below_credit_target":       belowCreditTarget,
+		"inactive_students":         inactiveStudents,
 		"activities_pending_review": pendingActivities,
 	})
 }
 
 // GetStudentsRequiringAttention handles GET /api/admin/monitoring/attention-students
 func GetStudentsRequiringAttention(c *fiber.Ctx) error {
+	admin, err := getAuthenticatedAdmin(c)
+	if err != nil {
+		return err
+	}
+
 	var students []models.Student
-	if err := config.DB.Preload("Certificates").Preload("Enrollments").Find(&students).Error; err != nil {
+	if err := scopeStudentQuery(config.DB.Preload("Certificates").Preload("Enrollments"), admin).Find(&students).Error; err != nil {
 		return errJSON(c, fiber.StatusInternalServerError, "Failed to fetch students requiring attention")
 	}
 
+	attentionList := getAttentionListForStudents(students)
+	return c.JSON(attentionList)
+}
+
+func getAttentionListForStudents(students []models.Student) []AttentionStudentResponse {
 	attentionList := make([]AttentionStudentResponse, 0)
 	var itemID uint = 1
 
@@ -534,8 +619,7 @@ func GetStudentsRequiringAttention(c *fiber.Ctx) error {
 			}
 		}
 	}
-
-	return c.JSON(attentionList)
+	return attentionList
 }
 
 // SendActivityMonitoringReminder handles POST /api/admin/monitoring/send-reminder
@@ -563,6 +647,10 @@ func SendActivityMonitoringReminder(c *fiber.Ctx) error {
 	err = config.DB.Where("enrollment_no = ? OR roll_no = ?", studentIdentifier, studentIdentifier).First(&student).Error
 	if err != nil {
 		return errJSON(c, fiber.StatusNotFound, "Student not found with provided enrollment/roll number")
+	}
+
+	if !isStudentInAdminScope(&student, admin) {
+		return errJSON(c, fiber.StatusForbidden, "Unauthorized: Student does not belong to your assigned batch")
 	}
 
 	msg := input.Message

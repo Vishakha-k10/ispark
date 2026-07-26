@@ -322,3 +322,211 @@ func TestSendActivityMonitoringReminder(t *testing.T) {
 		t.Errorf("Expected status 400 for missing student roll/enrollment, got %d", respBad.StatusCode)
 	}
 }
+
+func TestAssignedBatchIsolation_AttentionStudentsAndReminder(t *testing.T) {
+	app, _, _ := setupActivityMonitoringApp(t)
+
+	// Register student route for notification verification
+	studentAuthMW := func(c *fiber.Ctx) error {
+		authHeader := c.Get("Authorization")
+		if authHeader == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing token"})
+		}
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token header"})
+		}
+		claims, err := utils.ValidateAccessToken(parts[1])
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
+		}
+		c.Locals("roll_no", claims.RollNo)
+		return c.Next()
+	}
+	app.Get("/api/student/notifications", studentAuthMW, controllers.GetStudentNotifications)
+
+	// Create scoped Admin A for IT2K24
+	hashedPwd, _ := utils.HashPassword("AdminPass123!")
+	admin24 := models.Admin{
+		AdminID:       "ADM24",
+		Name:          "Mentor 24",
+		Email:         "m24@test.com",
+		Password:      hashedPwd,
+		Role:          "admin",
+		AssignedBatch: "IT2K24",
+		Status:        "Active",
+	}
+	config.DB.Create(&admin24)
+	token24, _ := utils.GenerateAccessToken(admin24.AdminID, admin24.Email, admin24.Role)
+
+	// Create scoped Admin B for IT2K25
+	admin25 := models.Admin{
+		AdminID:       "ADM25",
+		Name:          "Mentor 25",
+		Email:         "m25@test.com",
+		Password:      hashedPwd,
+		Role:          "admin",
+		AssignedBatch: "IT2K25",
+		Status:        "Active",
+	}
+	config.DB.Create(&admin25)
+
+	// Seed student in IT2K24
+	student24 := models.Student{
+		RollNo:       "IT2K24001",
+		Name:         "Aarav Sharma",
+		CourseName:   "MCA 5yrs Integrated",
+		Semester:     4,
+		ContactNo:    "9876543211",
+		EmailID:      "aarav24@test.com",
+		EnrollmentNo: "EN-IT2K24001",
+		IsVerified:   true,
+		Status:       "Approved",
+	}
+	config.DB.Create(&student24)
+
+	// Seed student in IT2K25
+	student25 := models.Student{
+		RollNo:       "IT2K25001",
+		Name:         "Bhavya Patel",
+		CourseName:   "MCA 5yrs Integrated",
+		Semester:     2,
+		ContactNo:    "9876543212",
+		EmailID:      "bhavya25@test.com",
+		EnrollmentNo: "EN-IT2K25001",
+		IsVerified:   true,
+		Status:       "Approved",
+	}
+	config.DB.Create(&student25)
+
+	// Seed pending certificates for both students
+	config.DB.Create(&models.Certificate{
+		StudentRollNo:    student24.RollNo,
+		ActivityName:     "Python Workshop",
+		ActivityCategory: "Technical",
+		Credits:          10,
+		Status:           "Pending",
+	})
+	config.DB.Create(&models.Certificate{
+		StudentRollNo:    student25.RollNo,
+		ActivityName:     "Cloud Summit",
+		ActivityCategory: "Technical",
+		Credits:          10,
+		Status:           "Pending",
+	})
+
+	// Admin 24 queries attention students
+	reqAtt := httptest.NewRequest("GET", "/api/admin/monitoring/attention-students", nil)
+	reqAtt.Header.Set("Authorization", "Bearer "+token24)
+
+	respAtt, err := app.Test(reqAtt)
+	if err != nil {
+		t.Fatalf("Failed to execute request: %v", err)
+	}
+	if respAtt.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", respAtt.StatusCode)
+	}
+
+	var attList []controllers.AttentionStudentResponse
+	if err := json.NewDecoder(respAtt.Body).Decode(&attList); err != nil {
+		t.Fatalf("Failed to decode response body: %v", err)
+	}
+
+	// Verify only IT2K24 student is present for Admin 24
+	for _, item := range attList {
+		if item.Enrollment == "EN-IT2K25001" {
+			t.Errorf("Assigned batch isolation broken: Admin 24 received IT2K25 student EN-IT2K25001")
+		}
+	}
+
+	// Admin 24 attempts to send reminder to IT2K25 student -> must be rejected (403 Forbidden)
+	payloadCross := controllers.ActivityReminderInput{
+		StudentEnrollment: "EN-IT2K25001",
+		ActivityName:      "Cloud Summit",
+		Issue:             "Pending Verification",
+		Message:           "Please complete your submission.",
+	}
+	jsonCross, _ := json.Marshal(payloadCross)
+	reqCross := httptest.NewRequest("POST", "/api/admin/monitoring/send-reminder", bytes.NewBuffer(jsonCross))
+	reqCross.Header.Set("Content-Type", "application/json")
+	reqCross.Header.Set("Authorization", "Bearer "+token24)
+
+	respCross, _ := app.Test(reqCross)
+	if respCross.StatusCode != http.StatusForbidden {
+		t.Errorf("Expected 403 Forbidden for cross-batch reminder, got %d", respCross.StatusCode)
+	}
+
+	// Admin 24 sends reminder to IT2K24 student -> must succeed (200 OK)
+	payloadValid := controllers.ActivityReminderInput{
+		StudentEnrollment: "EN-IT2K24001",
+		ActivityName:      "Python Workshop",
+		Issue:             "Pending Verification",
+	}
+	jsonValid, _ := json.Marshal(payloadValid)
+	reqValid := httptest.NewRequest("POST", "/api/admin/monitoring/send-reminder", bytes.NewBuffer(jsonValid))
+	reqValid.Header.Set("Content-Type", "application/json")
+	reqValid.Header.Set("Authorization", "Bearer "+token24)
+
+	respValid, _ := app.Test(reqValid)
+	if respValid.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200 for valid batch reminder, got %d", respValid.StatusCode)
+	}
+
+	// Verify student-visible reminder notification endpoint
+	tokenStudent24, _ := utils.GenerateAccessToken(student24.RollNo, student24.EmailID, "student")
+	reqNotif := httptest.NewRequest("GET", "/api/student/notifications", nil)
+	reqNotif.Header.Set("Authorization", "Bearer "+tokenStudent24)
+
+	respNotif, err := app.Test(reqNotif)
+	if err != nil {
+		t.Fatalf("Failed to execute student notifications request: %v", err)
+	}
+	if respNotif.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200 for student notifications, got %d", respNotif.StatusCode)
+	}
+
+	var notifs []controllers.StudentNotificationResponse
+	if err := json.NewDecoder(respNotif.Body).Decode(&notifs); err != nil {
+		t.Fatalf("Failed to decode student notifications response: %v", err)
+	}
+	if len(notifs) == 0 {
+		t.Errorf("Expected reminder to be delivered to student 24 notification list")
+	} else if !strings.Contains(notifs[0].Text, "Python Workshop") {
+		t.Errorf("Expected reminder notification to contain activity name, got: %s", notifs[0].Text)
+	}
+}
+
+func TestDatabaseDerivedInsights(t *testing.T) {
+	app, token, _ := setupActivityMonitoringApp(t)
+
+	req := httptest.NewRequest("GET", "/api/admin/monitoring/insights", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("Failed to execute request: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("Failed to decode insights response body: %v", err)
+	}
+
+	// Verify students_requiring_followup count matches exact pending certificates / attention count (1), NOT 1 + 3 = 4
+	followup, ok := body["students_requiring_followup"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected students_requiring_followup object in response")
+	}
+	followupCount := int(followup["count"].(float64))
+	if followupCount != 1 {
+		t.Errorf("Expected database-derived followup count 1, got %d (check for hardcoded offsets)", followupCount)
+	}
+
+	belowTarget := int(body["below_credit_target"].(float64))
+	if belowTarget < 0 {
+		t.Errorf("Invalid below_credit_target value: %d", belowTarget)
+	}
+}
