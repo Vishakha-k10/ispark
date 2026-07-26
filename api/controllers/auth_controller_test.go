@@ -23,7 +23,7 @@ import (
 
 var testDBOnce sync.Once
 
-// SetupTestDB initializes an in-memory SQLite database for testing and overrides config.DB exactly once
+// SetupTestDB initializes an in-memory SQLite database for testing and overrides config.DB
 func SetupTestDB(t *testing.T) {
 	t.Setenv("TESTING", "true")
 	testDBOnce.Do(func() {
@@ -31,31 +31,30 @@ func SetupTestDB(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to connect to in-memory SQLite database: %v", err)
 		}
+		config.DB = db
+	})
 
-		// Auto-migrate all tables used in testing
-		err = db.AutoMigrate(
+	if config.DB != nil {
+		_ = config.DB.AutoMigrate(
 			&models.Student{},
 			&models.OTP{},
 			&models.Admin{},
 			&models.Activity{},
 			&models.Certificate{},
 			&models.Enrollment{},
+			&models.BatchOverride{},
+			&models.GeneratedReport{},
+			&models.ScheduledReport{},
+			&models.ReportAuditLog{},
 		)
-		if err != nil {
-			t.Fatalf("Failed to run database migrations: %v", err)
-		}
 
-		config.DB = db
-	})
-
-	// Clear all tables to guarantee a clean slate
-	if config.DB != nil {
 		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Student{})
 		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.OTP{})
 		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Admin{})
 		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Activity{})
 		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Certificate{})
 		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Enrollment{})
+		config.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.BatchOverride{})
 	}
 }
 

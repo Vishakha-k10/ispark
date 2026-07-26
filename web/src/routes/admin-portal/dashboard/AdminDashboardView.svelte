@@ -218,6 +218,41 @@
 		isModalOpen = true;
 	}
 
+	async function downloadCertificate(cert: (typeof pendingCertificates)[0]) {
+		try {
+			const token = localStorage.getItem('admin_token');
+			const res = await fetch(`${API_BASE_URL}/api/admin/certificates/${cert.id}/download`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			});
+
+			if (res.ok) {
+				const blob = await res.blob();
+				const contentDisposition = res.headers.get('content-disposition');
+				let filename = cert.file || `Certificate_${cert.id}_${cert.regNo}`;
+				if (contentDisposition) {
+					const match = contentDisposition.match(/filename="?([^"]+)"?/);
+					if (match && match[1]) {
+						filename = match[1];
+					}
+				}
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = filename;
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				URL.revokeObjectURL(url);
+				triggerToast(`Downloaded submitted certificate file for ${cert.student}`);
+				return;
+			}
+			triggerToast('Certificate file is no longer available on server', 'danger');
+		} catch (e) {
+			console.error('Failed to download certificate file from backend', e);
+			triggerToast('Failed to download certificate file from server', 'danger');
+		}
+	}
+
 	function closeModal() {
 		isModalOpen = false;
 		activeCertificate = null;
@@ -906,8 +941,8 @@
 							</div>
 						</div>
 						<button
-							onclick={() => triggerToast(`Downloading ${activeCertificate?.file}...`)}
-							class="text-xs font-bold text-accent-red hover:underline focus:outline-none"
+							onclick={() => downloadCertificate(activeCertificate!)}
+							class="text-xs font-bold text-accent-red hover:underline focus:outline-none cursor-pointer"
 						>
 							Download
 						</button>

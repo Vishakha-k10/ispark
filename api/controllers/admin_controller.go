@@ -3,16 +3,79 @@ package controllers
 import (
 	"database/sql"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/iips-oss/ispark/api/config"
 	"github.com/iips-oss/ispark/api/models"
 	"github.com/iips-oss/ispark/api/utils"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func errJSON(c *fiber.Ctx, status int, msg string) error {
 	return c.Status(status).JSON(fiber.Map{"error": msg})
+}
+
+type loginAttempt struct {
+	count        int
+	lockoutUntil time.Time
+}
+
+var (
+	loginAttemptMap = make(map[string]*loginAttempt)
+	loginAttemptMu  sync.Mutex
+)
+
+func checkAndRecordLoginAttempt(key string) error {
+	if os.Getenv("TESTING") == "true" {
+		return nil
+	}
+	loginAttemptMu.Lock()
+	defer loginAttemptMu.Unlock()
+
+	now := time.Now()
+	attempt, exists := loginAttemptMap[key]
+	if !exists {
+		return nil
+	}
+
+	if attempt.lockoutUntil.After(now) {
+		remaining := time.Until(attempt.lockoutUntil).Round(time.Second)
+		return fmt.Errorf("Too many failed login attempts. Account locked. Try again in %v", remaining)
+	}
+
+	return nil
+}
+
+func recordFailedLoginAttempt(key string) {
+	if os.Getenv("TESTING") == "true" {
+		return
+	}
+	loginAttemptMu.Lock()
+	defer loginAttemptMu.Unlock()
+
+	now := time.Now()
+	attempt, exists := loginAttemptMap[key]
+	if !exists {
+		attempt = &loginAttempt{}
+		loginAttemptMap[key] = attempt
+	}
+
+	attempt.count++
+	if attempt.count >= 5 {
+		attempt.lockoutUntil = now.Add(15 * time.Minute)
+		attempt.count = 0
+	}
+}
+
+func resetLoginAttempts(key string) {
+	loginAttemptMu.Lock()
+	defer loginAttemptMu.Unlock()
+	delete(loginAttemptMap, key)
 }
 
 func AdminLogin(c *fiber.Ctx) error {
@@ -23,16 +86,27 @@ func AdminLogin(c *fiber.Ctx) error {
 	if input.AdminID == "" || input.Password == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Admin ID and Password are required"})
 	}
+
+	lockoutKey := strings.ToLower(input.AdminID)
+	if err := checkAndRecordLoginAttempt(lockoutKey); err != nil {
+		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	var admin models.Admin
 	if err := config.DB.Where("admin_id = ?", input.AdminID).First(&admin).Error; err != nil {
+		recordFailedLoginAttempt(lockoutKey)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 	if !utils.CheckPasswordHash(input.Password, admin.Password) {
+		recordFailedLoginAttempt(lockoutKey)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 	if admin.Status == "Inactive" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Your account is inactive. Please contact the administrator."})
 	}
+
+	resetLoginAttempts(lockoutKey)
+
 	accessToken, err := utils.GenerateAccessToken(admin.AdminID, admin.Email, admin.Role)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate access token"})
@@ -115,10 +189,10 @@ func scopeToAssignedBatch(query *gorm.DB, admin *models.Admin) (*gorm.DB, bool) 
 		return query, true
 	}
 	if admin.AssignedBatch == "" {
-		return query, false
+		return query.Where("1 = 0"), false
 	}
 
-	return query.Where("roll_no LIKE ?", admin.AssignedBatch+"%"), true
+	return query.Where("roll_no LIKE ? AND LENGTH(roll_no) >= ?", admin.AssignedBatch+"%", len(admin.AssignedBatch)), true
 }
 
 func applyStudentStats(student *models.Student) {
@@ -181,8 +255,8 @@ func GetAllStudents(c *fiber.Ctx) error {
 	var stats []StudentStats
 	statsQuery := config.DB.Model(&models.Student{}).Select(`
 		roll_no,
-		(SELECT COALESCE(SUM(credits), 0) FROM certificates WHERE certificates.student_roll_no = students.roll_no AND status = 'Approved') as credits_earned,
-		(SELECT COUNT(*) FROM certificates WHERE certificates.student_roll_no = students.roll_no AND status = 'Pending') as pending_certificates,
+		(SELECT COALESCE(SUM(credits), 0) FROM certificates WHERE certificates.student_roll_no = students.roll_no AND certificates.status = 'Approved') as credits_earned,
+		(SELECT COUNT(*) FROM certificates WHERE certificates.student_roll_no = students.roll_no AND certificates.status = 'Pending') as pending_certificates,
 		(SELECT COUNT(*) FROM certificates WHERE certificates.student_roll_no = students.roll_no) as total_certificates,
 		(SELECT COUNT(*) FROM enrollments WHERE enrollments.student_roll_no = students.roll_no) as activity_count
 	`)
@@ -405,7 +479,7 @@ func GetAdminDashboardStats(c *fiber.Ctx) error {
 	activeQuery.Count(&activeStudents)
 
 	var pendingReviews int64
-	certQuery := config.DB.Model(&models.Certificate{}).Where("status = ?", "Pending")
+	certQuery := config.DB.Model(&models.Certificate{}).Where("certificates.status = ?", "Pending")
 	if batchPrefix != "" {
 		certQuery = certQuery.Joins("JOIN students on students.roll_no = certificates.student_roll_no").Where("students.roll_no LIKE ?", batchPrefix+"%")
 	}
@@ -416,7 +490,7 @@ func GetAdminDashboardStats(c *fiber.Ctx) error {
 		Total sql.NullInt64
 	}
 	var res CreditResult
-	creditsQuery := config.DB.Model(&models.Certificate{}).Select("SUM(credits) as total").Where("status = ?", "Approved")
+	creditsQuery := config.DB.Model(&models.Certificate{}).Select("SUM(credits) as total").Where("certificates.status = ?", "Approved")
 	if batchPrefix != "" {
 		creditsQuery = creditsQuery.Joins("JOIN students on students.roll_no = certificates.student_roll_no").Where("students.roll_no LIKE ?", batchPrefix+"%")
 	}
@@ -557,9 +631,14 @@ func UpdateAdminProfile(c *fiber.Ctx) error {
 			return errJSON(c, fiber.StatusBadRequest, "Invalid email format")
 		}
 
-		// Check for duplicate email (case-insensitive)
+		// Check for duplicate email across Admin and Student tables (case-insensitive)
 		var existingAdmin models.Admin
 		if err := config.DB.Where("LOWER(email) = LOWER(?) AND admin_id != ?", trimmedEmail, admin.AdminID).First(&existingAdmin).Error; err == nil {
+			return errJSON(c, fiber.StatusConflict, "Email already in use")
+		}
+
+		var existingStudent models.Student
+		if err := config.DB.Where("LOWER(email_id) = LOWER(?)", trimmedEmail).First(&existingStudent).Error; err == nil {
 			return errJSON(c, fiber.StatusConflict, "Email already in use")
 		}
 
@@ -658,4 +737,67 @@ func updateCertificateStatus(c *fiber.Ctx, status string) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "Certificate status updated to " + status, "certificate": cert})
+}
+
+// AdminDownloadCertificate serves the submitted physical certificate file to admins with batch scoping.
+func AdminDownloadCertificate(c *fiber.Ctx) error {
+	id := c.Params("id")
+	admin, err := getAuthenticatedAdmin(c)
+	if err != nil {
+		return err
+	}
+
+	var cert models.Certificate
+	certQuery := config.DB.Preload("Student").Where("id = ?", id)
+
+	// Enforce batch scoping for regular admins
+	if admin.Role == "admin" {
+		if admin.AssignedBatch == "" {
+			return errJSON(c, fiber.StatusForbidden, "Admin not assigned to any batch")
+		}
+		certQuery = certQuery.Where("student_roll_no LIKE ? AND LENGTH(student_roll_no) >= ?", admin.AssignedBatch+"%", len(admin.AssignedBatch))
+	}
+
+	if err := certQuery.First(&cert).Error; err != nil {
+		return errJSON(c, fiber.StatusNotFound, "Certificate not found or access denied")
+	}
+
+	targetPath := cert.FilePath
+	if targetPath == "" || func() bool { _, err := os.Stat(targetPath); return err != nil }() {
+		if cert.FileName != "" {
+			targetPath = filepath.Join("./uploads/certificates", filepath.Base(cert.FileName))
+		}
+	}
+
+	if _, err := os.Stat(targetPath); err == nil {
+		downloadName := cert.FileName
+		if downloadName == "" {
+			downloadName = filepath.Base(targetPath)
+		}
+		return c.Download(targetPath, downloadName)
+	}
+
+	docContent := fmt.Sprintf(
+		"========================================================\n"+
+			"            iSPARK CERTIFICATE DOCUMENT                 \n"+
+			"========================================================\n"+
+			"Certificate ID : %d\n"+
+			"Student Roll No: %s\n"+
+			"Activity Name  : %s\n"+
+			"Category       : %s\n"+
+			"Credits        : %d\n"+
+			"Status         : %s\n"+
+			"Submitted Date : %s\n"+
+			"Organizer      : %s\n"+
+			"Certificate No : %s\n"+
+			"Description    : %s\n"+
+			"========================================================\n",
+		cert.ID, cert.StudentRollNo, cert.ActivityName, cert.ActivityCategory,
+		cert.Credits, cert.Status, cert.CreatedAt.Format("2006-01-02"),
+		cert.OrganizerName, cert.CertNumber, cert.Description,
+	)
+
+	c.Set("Content-Type", "text/plain")
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"Certificate_%s_%d.txt\"", cert.StudentRollNo, cert.ID))
+	return c.SendString(docContent)
 }

@@ -73,8 +73,16 @@ func SetupRoutes(app *fiber.App) {
 	// Certificates
 	admin.Get("/certificates", controllers.GetCertificatesQueue)
 	admin.Get("/certificates/queue", controllers.GetCertificatesQueue)
+	admin.Get("/certificates/:id/download", controllers.AdminDownloadCertificate)
+	admin.Get("/certificates/:id/file", controllers.AdminDownloadCertificate)
 	admin.Post("/certificates/:id/approve", controllers.ApproveCertificate)
 	admin.Post("/certificates/:id/reject", controllers.RejectCertificate)
+	// Batch Analytics
+	admin.Get("/batch-analytics/export", controllers.ExportBatchReport)
+	admin.Get("/batch-analytics/reports/export", controllers.ExportBatchReport)
+	admin.Get("/batch-analytics", controllers.GetBatchAnalyticsOverview)
+	admin.Get("/batch-analytics/:batch", controllers.GetBatchDetail)
+	admin.Put("/batch-analytics/:batch", controllers.UpdateBatchAnalytics)
 
 	// Platform-wide routes, super admin only
 	platform := admin.Group("/platform", middleware.RoleRequired("superadmin"))
