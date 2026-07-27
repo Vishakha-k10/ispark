@@ -309,6 +309,21 @@ func GetBatchAnalyticsOverview(c *fiber.Ctx) error {
 	})
 }
 
+// Helper: extract distinct canonical batch identifiers from existing students
+func getDistinctCanonicalBatches() map[string]string {
+	var rollNos []string
+	config.DB.Model(&models.Student{}).Pluck("roll_no", &rollNos)
+
+	batches := make(map[string]string)
+	for _, roll := range rollNos {
+		b := canonicalBatchName(roll)
+		if b != "" && b != "Unassigned" {
+			batches[strings.ToUpper(b)] = b
+		}
+	}
+	return batches
+}
+
 // GET /api/admin/batch-analytics/:batch
 func GetBatchDetail(c *fiber.Ctx) error {
 	admin, err := getAuthenticatedAdmin(c)
@@ -331,25 +346,35 @@ func GetBatchDetail(c *fiber.Ctx) error {
 		}
 	}
 
-	// Validate that the batch actually exists with at least 1 student
-	var batchCount int64
-	config.DB.Model(&models.Student{}).Where("roll_no LIKE ? AND LENGTH(roll_no) >= ?", cleanBatch+"%", len(cleanBatch)).Count(&batchCount)
-	if batchCount == 0 {
+	// Validate that cleanBatch is an exact canonical batch in the system
+	distinctBatches := getDistinctCanonicalBatches()
+	canonicalName, exists := distinctBatches[strings.ToUpper(cleanBatch)]
+	if !exists {
 		return errJSON(c, fiber.StatusNotFound, "Batch not found")
 	}
 
-	var students []models.Student
+	var allStudents []models.Student
 	query := config.DB.Model(&models.Student{}).Preload("Certificates").Preload("Enrollments")
-	query = query.Where("roll_no LIKE ?", cleanBatch+"%")
 
-	if err := query.Find(&students).Error; err != nil {
+	if err := query.Find(&allStudents).Error; err != nil {
 		return errJSON(c, fiber.StatusInternalServerError, "Failed to retrieve batch detail")
+	}
+
+	var students []models.Student
+	for _, s := range allStudents {
+		if strings.EqualFold(canonicalBatchName(s.RollNo), canonicalName) {
+			students = append(students, s)
+		}
+	}
+
+	if len(students) == 0 {
+		return errJSON(c, fiber.StatusNotFound, "Batch not found")
 	}
 
 	var override models.BatchOverride
 	notes := ""
 	overrideStatus := ""
-	if err := config.DB.Where("LOWER(batch_name) = LOWER(?)", cleanBatch).First(&override).Error; err == nil {
+	if err := config.DB.Where("LOWER(batch_name) = LOWER(?)", canonicalName).First(&override).Error; err == nil {
 		notes = override.Notes
 		overrideStatus = override.Status
 	}
@@ -439,7 +464,7 @@ func GetBatchDetail(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"batch": BatchStat{
-			Name:         batchParam,
+			Name:         canonicalName,
 			Students:     totalStudents,
 			PD:           totalPD,
 			SB:           totalSB,
@@ -474,10 +499,10 @@ func UpdateBatchAnalytics(c *fiber.Ctx) error {
 		}
 	}
 
-	// Validate that the batch actually exists with at least 1 student
-	var batchCount int64
-	config.DB.Model(&models.Student{}).Where("roll_no LIKE ? AND LENGTH(roll_no) >= ?", cleanBatch+"%", len(cleanBatch)).Count(&batchCount)
-	if batchCount == 0 {
+	// Validate that cleanBatch is an exact canonical batch in the system
+	distinctBatches := getDistinctCanonicalBatches()
+	canonicalName, exists := distinctBatches[strings.ToUpper(cleanBatch)]
+	if !exists {
 		return errJSON(c, fiber.StatusNotFound, "Batch not found")
 	}
 
@@ -498,10 +523,10 @@ func UpdateBatchAnalytics(c *fiber.Ctx) error {
 	}
 
 	var override models.BatchOverride
-	err = config.DB.Where("LOWER(batch_name) = LOWER(?)", cleanBatch).First(&override).Error
+	err = config.DB.Where("LOWER(batch_name) = LOWER(?)", canonicalName).First(&override).Error
 	if err != nil {
 		override = models.BatchOverride{
-			BatchName: cleanBatch,
+			BatchName: canonicalName,
 			Status:    input.Status,
 			Notes:     input.Notes,
 		}
@@ -528,6 +553,19 @@ func UpdateBatchAnalytics(c *fiber.Ctx) error {
 	})
 }
 
+// Exported helper functions for testing CSV filtering
+func FilterReportRowsByBatch(rawRows [][]string, admin *models.Admin) [][]string {
+	return filterReportRowsByBatch(rawRows, admin)
+}
+
+func FilterMentorRowsByBatch(rawRows [][]string, admin *models.Admin) [][]string {
+	return filterMentorRowsByBatch(rawRows, admin)
+}
+
+func FilterActivityRowsByBatch(rawRows [][]string, admin *models.Admin) [][]string {
+	return filterActivityRowsByBatch(rawRows, admin)
+}
+
 // Helper function to filter CSV report rows produced by reports_controller by admin's assigned batch
 func filterReportRowsByBatch(rawRows [][]string, admin *models.Admin) [][]string {
 	if len(rawRows) <= 1 {
@@ -549,7 +587,7 @@ func filterReportRowsByBatch(rawRows [][]string, admin *models.Admin) [][]string
 		}
 
 		if rollIndex == -1 {
-			return rawRows
+			return rawRows[:1] // Fail closed if column header not found
 		}
 
 		filtered := [][]string{header}
@@ -583,7 +621,7 @@ func filterMentorRowsByBatch(rawRows [][]string, admin *models.Admin) [][]string
 		}
 
 		if batchIndex == -1 {
-			return rawRows
+			return rawRows[:1] // Fail closed if column header not found
 		}
 
 		filtered := [][]string{header}
@@ -621,7 +659,7 @@ func filterActivityRowsByBatch(rawRows [][]string, admin *models.Admin) [][]stri
 		}
 
 		if rollIndex == -1 {
-			return rawRows
+			return rawRows[:1] // Fail closed if column header not found
 		}
 
 		filtered := [][]string{header}

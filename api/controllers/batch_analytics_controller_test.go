@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/iips-oss/ispark/api/config"
+	"github.com/iips-oss/ispark/api/controllers"
 	"github.com/iips-oss/ispark/api/models"
 	"github.com/iips-oss/ispark/api/routes"
 	"github.com/iips-oss/ispark/api/utils"
@@ -166,6 +167,122 @@ func TestBatchAnalyticsOverview(t *testing.T) {
 		}
 	})
 
+	t.Run("Superadmin_PartialBatch_IT2K2_Returns404_NoOverrideCreated", func(t *testing.T) {
+		superAdmin := models.Admin{
+			AdminID:  "superadmin1",
+			Name:     "Super Admin",
+			Email:    "superadmin1@isparc.dev",
+			Password: hashedPassword,
+			Role:     "superadmin",
+		}
+		config.DB.Create(&superAdmin)
+		superToken, err := utils.GenerateAccessToken(superAdmin.AdminID, superAdmin.Email, superAdmin.Role)
+		if err != nil {
+			t.Fatalf("Failed to generate superadmin token: %v", err)
+		}
+
+		// 1. GET /api/admin/batch-analytics/IT2K2
+		getReq := httptest.NewRequest("GET", "/api/admin/batch-analytics/IT2K2", nil)
+		getReq.Header.Set("Authorization", "Bearer "+superToken)
+		getResp, err := app.Test(getReq, 10000)
+		if err != nil {
+			t.Fatalf("GET request failed: %v", err)
+		}
+		if getResp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found for partial batch IT2K2, got %d", getResp.StatusCode)
+		}
+
+		// 2. PUT /api/admin/batch-analytics/IT2K2
+		bodyJSON := `{"status":"Excellent","notes":"Partial batch test"}`
+		putReq := httptest.NewRequest("PUT", "/api/admin/batch-analytics/IT2K2", strings.NewReader(bodyJSON))
+		putReq.Header.Set("Authorization", "Bearer "+superToken)
+		putReq.Header.Set("Content-Type", "application/json")
+		putResp, err := app.Test(putReq, 10000)
+		if err != nil {
+			t.Fatalf("PUT request failed: %v", err)
+		}
+		if putResp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found for PUT to partial batch IT2K2, got %d", putResp.StatusCode)
+		}
+
+		// 3. Verify no BatchOverride record created
+		var count int64
+		config.DB.Model(&models.BatchOverride{}).Where("LOWER(batch_name) = LOWER(?)", "IT2K2").Count(&count)
+		if count != 0 {
+			t.Errorf("Expected 0 BatchOverride records for IT2K2, found %d", count)
+		}
+	})
+
+	t.Run("Superadmin_SyntheticBatch_IT2K240FAKE_Returns404_NoOverrideCreated", func(t *testing.T) {
+		superAdminToken, _ := utils.GenerateAccessToken("superadmin1", "superadmin1@isparc.dev", "superadmin")
+
+		// 1. GET /api/admin/batch-analytics/IT2K240FAKE
+		getReq := httptest.NewRequest("GET", "/api/admin/batch-analytics/IT2K240FAKE", nil)
+		getReq.Header.Set("Authorization", "Bearer "+superAdminToken)
+		getResp, err := app.Test(getReq, 10000)
+		if err != nil {
+			t.Fatalf("GET request failed: %v", err)
+		}
+		if getResp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found for synthetic batch IT2K240FAKE, got %d", getResp.StatusCode)
+		}
+
+		// 2. PUT /api/admin/batch-analytics/IT2K240FAKE
+		bodyJSON := `{"status":"Excellent","notes":"Synthetic batch test"}`
+		putReq := httptest.NewRequest("PUT", "/api/admin/batch-analytics/IT2K240FAKE", strings.NewReader(bodyJSON))
+		putReq.Header.Set("Authorization", "Bearer "+superAdminToken)
+		putReq.Header.Set("Content-Type", "application/json")
+		putResp, err := app.Test(putReq, 10000)
+		if err != nil {
+			t.Fatalf("PUT request failed: %v", err)
+		}
+		if putResp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found for PUT to synthetic batch IT2K240FAKE, got %d", putResp.StatusCode)
+		}
+
+		// 3. Verify no BatchOverride record created
+		var count int64
+		config.DB.Model(&models.BatchOverride{}).Where("LOWER(batch_name) = LOWER(?)", "IT2K240FAKE").Count(&count)
+		if count != 0 {
+			t.Errorf("Expected 0 BatchOverride records for IT2K240FAKE, found %d", count)
+		}
+	})
+
+	t.Run("Superadmin_CompletelyNonexistentBatch_Returns404_NoOverrideCreated", func(t *testing.T) {
+		superAdminToken, _ := utils.GenerateAccessToken("superadmin1", "superadmin1@isparc.dev", "superadmin")
+
+		// 1. GET /api/admin/batch-analytics/NONEXISTENT
+		getReq := httptest.NewRequest("GET", "/api/admin/batch-analytics/NONEXISTENT", nil)
+		getReq.Header.Set("Authorization", "Bearer "+superAdminToken)
+		getResp, err := app.Test(getReq, 10000)
+		if err != nil {
+			t.Fatalf("GET request failed: %v", err)
+		}
+		if getResp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found for nonexistent batch, got %d", getResp.StatusCode)
+		}
+
+		// 2. PUT /api/admin/batch-analytics/NONEXISTENT
+		bodyJSON := `{"status":"At Risk","notes":"Nonexistent batch test"}`
+		putReq := httptest.NewRequest("PUT", "/api/admin/batch-analytics/NONEXISTENT", strings.NewReader(bodyJSON))
+		putReq.Header.Set("Authorization", "Bearer "+superAdminToken)
+		putReq.Header.Set("Content-Type", "application/json")
+		putResp, err := app.Test(putReq, 10000)
+		if err != nil {
+			t.Fatalf("PUT request failed: %v", err)
+		}
+		if putResp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found for PUT to nonexistent batch, got %d", putResp.StatusCode)
+		}
+
+		// 3. Verify no BatchOverride record created
+		var count int64
+		config.DB.Model(&models.BatchOverride{}).Where("LOWER(batch_name) = LOWER(?)", "NONEXISTENT").Count(&count)
+		if count != 0 {
+			t.Errorf("Expected 0 BatchOverride records for NONEXISTENT, found %d", count)
+		}
+	})
+
 	t.Run("ExportBatchReport_Success", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/admin/batch-analytics/reports/export?type=batch", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -181,6 +298,34 @@ func TestBatchAnalyticsOverview(t *testing.T) {
 
 		if !strings.Contains(resp.Header.Get("Content-Type"), "text/csv") {
 			t.Errorf("Expected Content-Type text/csv, got %s", resp.Header.Get("Content-Type"))
+		}
+	})
+
+	t.Run("CSVFilter_MissingColumnHeader_FailsClosed", func(t *testing.T) {
+		batchAdmin := models.Admin{
+			AdminID:       "scopedadmin",
+			Role:          "admin",
+			AssignedBatch: "IT2K24",
+		}
+		rawRowsMissingHeader := [][]string{
+			{"UnknownCol1", "UnknownCol2"},
+			{"IT2K24001", "Data1"},
+			{"IT2K25001", "Data2"},
+		}
+
+		res1 := controllers.FilterReportRowsByBatch(rawRowsMissingHeader, &batchAdmin)
+		if len(res1) != 1 {
+			t.Errorf("Expected 1 row (header only fail closed), got %d", len(res1))
+		}
+
+		res2 := controllers.FilterMentorRowsByBatch(rawRowsMissingHeader, &batchAdmin)
+		if len(res2) != 1 {
+			t.Errorf("Expected 1 row (header only fail closed), got %d", len(res2))
+		}
+
+		res3 := controllers.FilterActivityRowsByBatch(rawRowsMissingHeader, &batchAdmin)
+		if len(res3) != 1 {
+			t.Errorf("Expected 1 row (header only fail closed), got %d", len(res3))
 		}
 	})
 }
