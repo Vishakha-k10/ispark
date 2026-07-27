@@ -944,3 +944,68 @@ func TestAdminLogin(t *testing.T) {
 		}
 	})
 }
+
+func TestAdminDownloadCertificate_MissingFile(t *testing.T) {
+	t.Setenv("JWT_SECRET", strings.Repeat("test-jwt-", 4))
+	t.Setenv("JWT_REFRESH_SECRET", strings.Repeat("test-refresh-jwt-", 4))
+
+	SetupTestDB(t)
+
+	app := fiber.New()
+	routes.SetupRoutes(app)
+
+	// Seed Admin
+	hashedPassword, _ := utils.HashPassword("Password123!")
+	admin := models.Admin{
+		AdminID:       "certadmin",
+		Name:          "Cert Admin",
+		Email:         "certadmin@isparc.dev",
+		Password:      hashedPassword,
+		Role:          "admin",
+		AssignedBatch: "IT2K24",
+	}
+	config.DB.Create(&admin)
+
+	// Seed Student in batch
+	student := models.Student{
+		RollNo:       "IT2K24999",
+		Name:         "Cert Student",
+		EmailID:      "certstudent@isparc.dev",
+		CourseName:   "IT",
+		Semester:     4,
+		EnrollmentNo: "EN999",
+	}
+	config.DB.Create(&student)
+
+	// Seed Certificate with missing physical file path
+	cert := models.Certificate{
+		ID:               9999,
+		StudentRollNo:    "IT2K24999",
+		ActivityName:     "Missing File Cert",
+		ActivityCategory: "Skill Building",
+		Credits:          10,
+		Status:           "Approved",
+		FileName:         "missing_file.pdf",
+		FilePath:         "./uploads/certificates/non_existent_file_12345.pdf",
+	}
+	config.DB.Create(&cert)
+
+	token, err := utils.GenerateAccessToken(admin.AdminID, admin.Email, admin.Role)
+	if err != nil {
+		t.Fatalf("Failed to generate token: %v", err)
+	}
+
+	t.Run("MissingFile_Returns404", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/admin/certificates/9999/download", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req, 10000)
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found for missing certificate file, got %d", resp.StatusCode)
+		}
+	})
+}

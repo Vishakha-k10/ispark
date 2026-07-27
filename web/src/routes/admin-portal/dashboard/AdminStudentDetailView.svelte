@@ -86,6 +86,125 @@
 	let searchQuery = $state('');
 	let filterCategory = $state('All');
 	let filterStatus = $state<'All' | ActivityStatus>('All');
+	let selectedActivity = $state<Activity | null>(null);
+	let selectedCert = $state<Certificate | null>(null);
+
+	function scrollToHistory(tab: 'activity' | 'certificate') {
+		activeTab = tab;
+		setTimeout(() => {
+			const el = document.getElementById('history-section');
+			if (el) {
+				el.scrollIntoView({ behavior: 'smooth' });
+			}
+		}, 50);
+	}
+
+	function downloadStudentReport() {
+		try {
+			const rows: string[][] = [
+				['ISPARC STUDENT INDIVIDUAL REPORT'],
+				['Generated At', new Date().toLocaleString()],
+				[],
+				['STUDENT PROFILE'],
+				['Roll No / Reg No', student.regNo],
+				['Student Name', student.name],
+				['Department', student.department],
+				['Semester', String(student.semester)],
+				['Batch', student.batch || 'Unassigned'],
+				['Email', student.email],
+				['Status', student.status],
+				['Credits Earned', String(student.creditsEarned)],
+				['Credits Required', String(student.creditsTarget)],
+				['Completion %', `${creditPct}%`],
+				[],
+				['CERTIFICATES LOG'],
+				['ID', 'Certificate Name', 'Issuer / Category', 'Credits', 'Status', 'Date']
+			];
+
+			if (certificates.length === 0) {
+				rows.push(['No certificates logged']);
+			} else {
+				for (const c of certificates) {
+					rows.push([String(c.id), c.name, c.issuer, String(c.credits), c.status, c.date]);
+				}
+			}
+
+			rows.push([]);
+			rows.push(['ACTIVITIES PARTICIPATION LOG']);
+			rows.push(['ID', 'Activity Name', 'Category', 'Credits', 'Status', 'Date']);
+
+			if (activities.length === 0) {
+				rows.push(['No activities logged']);
+			} else {
+				for (const a of activities) {
+					rows.push([String(a.id), a.name, a.category, String(a.credits), a.status, a.date]);
+				}
+			}
+
+			const csvString = rows
+				.map((row) => row.map((cell) => `"${(cell || '').replace(/"/g, '""')}"`).join(','))
+				.join('\n');
+
+			const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `${student.regNo}_Student_Report.csv`;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			URL.revokeObjectURL(url);
+
+			toast(`Downloaded report for ${student.name}`);
+		} catch {
+			toast('Failed to download student report', 'danger');
+		}
+	}
+
+	function downloadActivityReport() {
+		try {
+			const rows: string[][] = [
+				['ISPARC STUDENT ACTIVITY PARTICIPATION REPORT'],
+				['Generated At', new Date().toLocaleString()],
+				[],
+				['STUDENT DETAILS'],
+				['Roll No', student.regNo],
+				['Student Name', student.name],
+				['Department', student.department],
+				['Semester', String(student.semester)],
+				['Batch', student.batch || 'Unassigned'],
+				[],
+				['ACTIVITIES PARTICIPATION LOG'],
+				['ID', 'Activity Name', 'Category', 'Credits', 'Status', 'Date']
+			];
+
+			if (activities.length === 0) {
+				rows.push(['No activities logged']);
+			} else {
+				for (const a of activities) {
+					rows.push([String(a.id), a.name, a.category, String(a.credits), a.status, a.date]);
+				}
+			}
+
+			const csvString = rows
+				.map((row) => row.map((cell) => `"${(cell || '').replace(/"/g, '""')}"`).join(','))
+				.join('\n');
+
+			const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `${student.regNo}_Activity_Report.csv`;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			URL.revokeObjectURL(url);
+
+			toast(`Activity report downloaded for ${student.name}`);
+		} catch {
+			toast('Failed to download activity report', 'danger');
+		}
+	}
 
 	const categories = $derived(['All', ...Array.from(new Set(activities.map((a) => a.category)))]);
 
@@ -357,8 +476,8 @@
 			<!-- Actions -->
 			<div class="flex shrink-0 flex-wrap items-center gap-2">
 				<button
-					onclick={() => (activeTab = 'activity')}
-					class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50"
+					onclick={() => scrollToHistory('activity')}
+					class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50 cursor-pointer"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -377,8 +496,8 @@
 					View Activities
 				</button>
 				<button
-					onclick={() => (activeTab = 'certificate')}
-					class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50"
+					onclick={() => scrollToHistory('certificate')}
+					class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50 cursor-pointer"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -397,8 +516,8 @@
 					View Certificates
 				</button>
 				<button
-					onclick={() => toast(`Generating report for ${student.name}...`)}
-					class="inline-flex items-center gap-1.5 rounded-lg bg-[#881B1B] px-3 py-2 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-[#881B1B]/90"
+					onclick={downloadStudentReport}
+					class="inline-flex items-center gap-1.5 rounded-lg bg-[#881B1B] px-3 py-2 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-[#881B1B]/90 cursor-pointer"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -596,7 +715,10 @@
 	</section>
 
 	<!-- ── History (tabs) ────────────────────────────────────────────────────── -->
-	<section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+	<section
+		id="history-section"
+		class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs"
+	>
 		<!-- Tabs -->
 		<div class="flex items-center gap-6 border-b border-slate-100 px-5 pt-4">
 			<button
@@ -711,8 +833,8 @@
 									</td>
 									<td class="px-5 py-3.5 text-center">
 										<button
-											onclick={() => toast(`Opening “${activity.name}”`)}
-											class="text-inst-navy text-[11px] font-bold hover:underline"
+											onclick={() => (selectedActivity = activity)}
+											class="text-inst-navy text-[11px] font-bold hover:underline cursor-pointer"
 										>
 											View Activity
 										</button>
@@ -758,8 +880,8 @@
 								</td>
 								<td class="px-5 py-3.5 text-center">
 									<button
-										onclick={() => toast(`Opening certificate “${cert.name}”`)}
-										class="text-inst-navy text-[11px] font-bold hover:underline"
+										onclick={() => (selectedCert = cert)}
+										class="text-inst-navy text-[11px] font-bold hover:underline cursor-pointer"
 									>
 										View
 									</button>
@@ -940,8 +1062,8 @@
 						></div>
 					</div>
 					<button
-						onclick={() => toast(`Preparing full activity report for ${student.name}...`)}
-						class="mt-3 w-full rounded-lg border border-[#881B1B]/20 bg-[#881B1B]/5 py-2 text-[11px] font-bold tracking-wide text-[#881B1B] uppercase transition-colors hover:bg-[#881B1B]/10"
+						onclick={downloadActivityReport}
+						class="mt-3 w-full rounded-lg border border-[#881B1B]/20 bg-[#881B1B]/5 py-2 text-[11px] font-bold tracking-wide text-[#881B1B] uppercase transition-colors hover:bg-[#881B1B]/10 cursor-pointer"
 					>
 						View Full Activity Report →
 					</button>
@@ -1077,3 +1199,139 @@
 		</div>
 	</section>
 </div>
+
+<!-- ── Activity Details Modal ───────────────────────────────────────────── -->
+{#if selectedActivity}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4"
+		transition:fade={{ duration: 150 }}
+	>
+		<div
+			class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
+			transition:slide={{ duration: 150 }}
+		>
+			<div class="flex items-center justify-between border-b border-slate-100 pb-4">
+				<div>
+					<span class="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase"
+						>Activity Details</span
+					>
+					<h3 class="text-base font-bold text-slate-900">{selectedActivity.name}</h3>
+				</div>
+				<button
+					aria-label="Close"
+					onclick={() => (selectedActivity = null)}
+					class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
+			</div>
+			<div class="mt-4 space-y-3 font-sans text-xs">
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Category</span>
+					<span class="font-extrabold text-slate-800">{selectedActivity.category}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Date</span>
+					<span class="font-bold text-slate-800">{selectedActivity.date}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Credits Awarded</span>
+					<span class="font-extrabold text-emerald-700">{selectedActivity.credits} Credits</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Status</span>
+					<span class="font-bold text-slate-800">{selectedActivity.status}</span>
+				</div>
+			</div>
+			<div class="mt-6 flex justify-end">
+				<button
+					onclick={() => (selectedActivity = null)}
+					class="rounded-lg bg-[#881B1B] px-4 py-2 text-xs font-bold text-white hover:bg-[#881B1B]/90 cursor-pointer"
+				>
+					Close
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- ── Certificate Details Modal ────────────────────────────────────────── -->
+{#if selectedCert}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4"
+		transition:fade={{ duration: 150 }}
+	>
+		<div
+			class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
+			transition:slide={{ duration: 150 }}
+		>
+			<div class="flex items-center justify-between border-b border-slate-100 pb-4">
+				<div>
+					<span class="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase"
+						>Certificate Verification</span
+					>
+					<h3 class="text-base font-bold text-slate-900">{selectedCert.name}</h3>
+				</div>
+				<button
+					aria-label="Close"
+					onclick={() => (selectedCert = null)}
+					class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
+			</div>
+			<div class="mt-4 space-y-3 font-sans text-xs">
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Issuer / Organization</span>
+					<span class="font-extrabold text-slate-800">{selectedCert.issuer}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Issue Date</span>
+					<span class="font-bold text-slate-800">{selectedCert.date}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Credits Granted</span>
+					<span class="font-extrabold text-emerald-700">{selectedCert.credits} Credits</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Verification Status</span>
+					<span class="font-bold text-slate-800">{selectedCert.status}</span>
+				</div>
+			</div>
+			<div class="mt-6 flex justify-end">
+				<button
+					onclick={() => (selectedCert = null)}
+					class="rounded-lg bg-[#881B1B] px-4 py-2 text-xs font-bold text-white hover:bg-[#881B1B]/90 cursor-pointer"
+				>
+					Close
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

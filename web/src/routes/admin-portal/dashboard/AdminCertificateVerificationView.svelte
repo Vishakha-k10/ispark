@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { slide } from 'svelte/transition';
+	import { fade, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { API_BASE_URL } from '$lib/config';
 
@@ -203,6 +203,52 @@
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────────
+	let isFullCertModalOpen = $state(false);
+
+	function openFullCertModal(cert: Certificate) {
+		selectedId = cert.id;
+		isFullCertModalOpen = true;
+	}
+
+	function closeFullCertModal() {
+		isFullCertModalOpen = false;
+	}
+
+	async function downloadCertificate(cert: Certificate) {
+		try {
+			const token = localStorage.getItem('admin_token');
+			const res = await fetch(`${API_BASE_URL}/api/admin/certificates/${cert.id}/download`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			});
+
+			if (res.ok) {
+				const blob = await res.blob();
+				const contentDisposition = res.headers.get('content-disposition');
+				let filename = `Certificate_${cert.id}_${cert.regNo}`;
+				if (contentDisposition) {
+					const match = contentDisposition.match(/filename="?([^"]+)"?/);
+					if (match && match[1]) {
+						filename = match[1];
+					}
+				}
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = filename;
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				URL.revokeObjectURL(url);
+				triggerToast(`Downloaded submitted certificate for ${cert.student}`);
+				return;
+			}
+			triggerToast('Certificate file is no longer available on server', 'danger');
+		} catch (e) {
+			console.error('Failed to download certificate file from backend', e);
+			triggerToast('Failed to download certificate file from server', 'danger');
+		}
+	}
+
 	function initials(name: string): string {
 		return name
 			.split(' ')
@@ -732,8 +778,8 @@
 					<span class="text-[10px] font-semibold text-slate-400">{selectedCert.student}</span>
 				</div>
 				<button
-					onclick={() => triggerToast(`Opening full certificate for ${selectedCert.student}...`)}
-					class="w-full inline-flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+					onclick={() => openFullCertModal(selectedCert!)}
+					class="w-full inline-flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -870,8 +916,8 @@
 						Reject Certificate
 					</button>
 					<button
-						onclick={() => triggerToast(`Downloading certificate ${selectedCert.id}...`)}
-						class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+						onclick={() => downloadCertificate(selectedCert!)}
+						class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -949,3 +995,97 @@
 		</table>
 	</div>
 </section>
+
+<!-- ── Full Certificate Modal ───────────────────────────────────────────── -->
+{#if isFullCertModalOpen && selectedCert}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4"
+		transition:fade={{ duration: 150 }}
+	>
+		<div
+			class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
+			transition:slide={{ duration: 150 }}
+		>
+			<div class="flex items-center justify-between border-b border-slate-100 pb-4">
+				<div>
+					<span class="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase"
+						>Certificate Verification Record</span
+					>
+					<h3 class="text-base font-bold text-slate-900">{selectedCert.name}</h3>
+				</div>
+				<button
+					aria-label="Close"
+					onclick={closeFullCertModal}
+					class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
+			</div>
+			<div class="mt-4 space-y-3 font-sans text-xs">
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Certificate ID</span>
+					<span class="font-extrabold text-slate-800">{selectedCert.id}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Student Name</span>
+					<span class="font-extrabold text-slate-800">{selectedCert.student}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Roll No</span>
+					<span class="font-bold text-slate-800">{selectedCert.regNo}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Certificate Type</span>
+					<span class="font-bold text-slate-800">{selectedCert.type}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Submitted Date</span>
+					<span class="font-bold text-slate-800">{selectedCert.submittedOn}</span>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Credits Requested</span>
+					<span class="font-extrabold text-emerald-700"
+						>{selectedCert.creditsRequested} Credits</span
+					>
+				</div>
+				<div class="flex justify-between rounded-lg bg-slate-50 p-3">
+					<span class="font-bold text-slate-500">Verification Status</span>
+					<span class="font-bold text-slate-800">{selectedCert.status}</span>
+				</div>
+				{#if selectedCert.remarks}
+					<div class="rounded-lg bg-slate-50 p-3">
+						<span class="font-bold text-slate-500 block mb-1">Remarks / Description</span>
+						<p class="font-medium text-slate-700">{selectedCert.remarks}</p>
+					</div>
+				{/if}
+			</div>
+			<div class="mt-6 flex justify-end gap-2">
+				<button
+					onclick={() => downloadCertificate(selectedCert!)}
+					class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+				>
+					Download Record
+				</button>
+				<button
+					onclick={closeFullCertModal}
+					class="rounded-lg bg-[#881B1B] px-4 py-2 text-xs font-bold text-white hover:bg-[#881B1B]/90 cursor-pointer"
+				>
+					Close
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
