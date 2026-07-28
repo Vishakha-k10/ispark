@@ -418,10 +418,10 @@
 			</div>
 		</div>
 		<div class="mt-4">
-			<h3 class="text-xs font-bold text-slate-900 capitalize">
-				Total Activities Monitored
-			</h3>
-			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block">{stats.total_monitored_change}</span>
+			<h3 class="text-xs font-bold text-slate-900 capitalize">Total Activities Monitored</h3>
+			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
+				>{stats.total_monitored_change}</span
+			>
 		</div>
 	</div>
 
@@ -450,9 +450,7 @@
 			</div>
 		</div>
 		<div class="mt-4">
-			<h3 class="text-xs font-bold text-slate-900 capitalize">
-				Ongoing Activities
-			</h3>
+			<h3 class="text-xs font-bold text-slate-900 capitalize">Ongoing Activities</h3>
 			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block">
 				{stats.nearing_deadline}
 			</span>
@@ -484,11 +482,9 @@
 			</div>
 		</div>
 		<div class="mt-4">
-			<h3 class="text-xs font-bold text-slate-900 capitalize">
-				Completed Activities
-			</h3>
+			<h3 class="text-xs font-bold text-slate-900 capitalize">Completed Activities</h3>
 			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block">
-    			{stats.completed_change}
+				{stats.completed_change}
 			</span>
 		</div>
 	</div>
@@ -518,9 +514,7 @@
 			</div>
 		</div>
 		<div class="mt-4">
-			<h3 class="text-xs font-bold text-slate-900 capitalize">
-				Pending Verification
-			</h3>
+			<h3 class="text-xs font-bold text-slate-900 capitalize">Pending Verification</h3>
 			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block">
 				{stats.requires_review}
 			</span>

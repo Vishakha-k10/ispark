@@ -75,7 +75,7 @@
 		batch:
 			'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
 		student_progress:
-    		'M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198v-.001c0-.656-.126-1.283-.356-1.858M15 19.128v-.001c0-.656-.126-1.283-.356-1.858A6.002 6.002 0 009 15.75H5.25A3.75 3.75 0 001.5 19.5v.75h13.5v-.75c0-.129-.007-.257-.02-.384M12.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zm6 3a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
+			'M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198v-.001c0-.656-.126-1.283-.356-1.858M15 19.128v-.001c0-.656-.126-1.283-.356-1.858A6.002 6.002 0 009 15.75H5.25A3.75 3.75 0 001.5 19.5v.75h13.5v-.75c0-.129-.007-.257-.02-.384M12.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zm6 3a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
 		compliance:
 			'M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
 		certificate_verification:
@@ -365,19 +365,20 @@
 		<!-- ================= Summary cards ================= -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 			<!-- Card 1: Assigned Batches -->
-		<div
-			class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
-		>
+			<div
+				class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
+			>
 				<div class="flex items-center justify-between">
-				<span class="text-2xl font-bold font-serif text-slate-900">{summary.assignedBatches}</span>
-				<div class="p-2.5 rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+					<span class="text-2xl font-bold font-serif text-slate-900">{summary.assignedBatches}</span
+					>
+					<div class="p-2.5 rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"
 							viewBox="0 0 24 24"
-								stroke-width="2"
+							stroke-width="2"
 							stroke="currentColor"
-						class="w-5 h-5"
+							class="w-5 h-5"
 						>
 							<path
 								stroke-linecap="round"
@@ -387,28 +388,28 @@
 						</svg>
 					</div>
 				</div>
-			<div class="mt-4">
+				<div class="mt-4">
 					<h3 class="text-xs font-bold text-slate-900 capitalize">Assigned Batches</h3>
-				<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
-					>CURRENTLY ACTIVE</span
-				>
-			</div>
+					<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
+						>CURRENTLY ACTIVE</span
+					>
+				</div>
 			</div>
 
 			<!-- Card 2: Total Students -->
-		<div
-			class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
-		>
+			<div
+				class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
+			>
 				<div class="flex items-center justify-between">
-				<span class="text-2xl font-bold font-serif text-slate-900">{summary.totalStudents}</span>
-				<div class="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+					<span class="text-2xl font-bold font-serif text-slate-900">{summary.totalStudents}</span>
+					<div class="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"
 							viewBox="0 0 24 24"
-								stroke-width="2"
+							stroke-width="2"
 							stroke="currentColor"
-						class="w-5 h-5"
+							class="w-5 h-5"
 						>
 							<path
 								stroke-linecap="round"
@@ -418,77 +419,78 @@
 						</svg>
 					</div>
 				</div>
-			<div class="mt-4">
+				<div class="mt-4">
 					<h3 class="text-xs font-bold text-slate-900 capitalize">Total Students</h3>
 					<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
-					>ACROSS BATCHES</span
-				>
-			</div>
-			</div>
-
-		<!-- Card 3: Compliant Students -->
-		<div
-			class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
-		>
-			<div class="flex items-center justify-between">
-				<span class="text-2xl font-bold font-serif text-slate-900">{summary.compliantStudents}</span
-				>
-				<div class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						stroke="currentColor"
-						class="w-5 h-5"
+						>ACROSS BATCHES</span
 					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
 				</div>
 			</div>
-			<div class="mt-4">
-				<h3 class="text-xs font-bold text-slate-900 capitalize">Compliant Students</h3>
-				<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
-					>MET REQUIREMENTS</span
-				>
-			</div>
-		</div>
 
-		<!-- Card 4: Defaulters -->
-		<div
-			class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
-		>
-			<div class="flex items-center justify-between">
-				<span class="text-2xl font-bold font-serif text-[#881B1B]">{summary.defaulters}</span>
-				<div class="p-2.5 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						stroke="currentColor"
-						class="w-5 h-5"
+			<!-- Card 3: Compliant Students -->
+			<div
+				class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
+			>
+				<div class="flex items-center justify-between">
+					<span class="text-2xl font-bold font-serif text-slate-900"
+						>{summary.compliantStudents}</span
 					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-						/>
-					</svg>
+					<div class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+							stroke="currentColor"
+							class="w-5 h-5"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+					</div>
+				</div>
+				<div class="mt-4">
+					<h3 class="text-xs font-bold text-slate-900 capitalize">Compliant Students</h3>
+					<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
+						>MET REQUIREMENTS</span
+					>
 				</div>
 			</div>
-			<div class="mt-4">
-				<h3 class="text-xs font-bold text-slate-900 capitalize">Defaulters</h3>
-				<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
-					>NEEDS ATTENTION</span
-				>
+
+			<!-- Card 4: Defaulters -->
+			<div
+				class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow duration-200"
+			>
+				<div class="flex items-center justify-between">
+					<span class="text-2xl font-bold font-serif text-[#881B1B]">{summary.defaulters}</span>
+					<div class="p-2.5 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+							stroke="currentColor"
+							class="w-5 h-5"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+							/>
+						</svg>
+					</div>
+				</div>
+				<div class="mt-4">
+					<h3 class="text-xs font-bold text-slate-900 capitalize">Defaulters</h3>
+					<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
+						>NEEDS ATTENTION</span
+					>
+				</div>
 			</div>
 		</div>
-	</div>
 
 		<!-- ================= Batch performance table ================= -->
 		<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -703,28 +705,28 @@
 					Track student completion across both development tracks
 				</p>
 
-		<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
-			{#each requirements as req}
-				{@const tone =
-					req.tone === 'emerald'
-						? { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' }
-						: req.tone === 'amber'
-							? { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' }
-							: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-[#881B1B]' }}
-				<div
-					class="rounded-xl border {tone.border} {tone.bg} p-4 hover:shadow-sm transition-shadow"
-				>
-					<p class="text-xs text-slate-600 leading-snug">{req.label}</p>
-					<p class="mt-3 text-2xl font-bold font-serif {tone.text}">{req.count}</p>
-					<p class="text-xs text-slate-400">Students</p>
+				<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+					{#each requirements as req}
+						{@const tone =
+							req.tone === 'emerald'
+								? { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' }
+								: req.tone === 'amber'
+									? { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' }
+									: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-[#881B1B]' }}
+						<div
+							class="rounded-xl border {tone.border} {tone.bg} p-4 hover:shadow-sm transition-shadow"
+						>
+							<p class="text-xs text-slate-600 leading-snug">{req.label}</p>
+							<p class="mt-3 text-2xl font-bold font-serif {tone.text}">{req.count}</p>
+							<p class="text-xs text-slate-400">Students</p>
+						</div>
+					{/each}
 				</div>
-			{/each}
-		</div>
-	</div>
-{/if}
-	<!-- ================= Reports ================= -->
-	<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-		<h2 class="font-serif font-bold text-sm text-slate-900">Reports</h2>
+			</div>
+		{/if}
+		<!-- ================= Reports ================= -->
+		<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+			<h2 class="font-serif font-bold text-sm text-slate-900">Reports</h2>
 
 			<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
 				{#each reports as report}
