@@ -418,10 +418,8 @@
 			</div>
 		</div>
 		<div class="mt-4">
-			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-				Total Activities Monitored
-			</h3>
-			<span class="text-[11px] font-bold text-emerald-600 mt-1 block"
+			<h3 class="text-xs font-bold text-slate-900 capitalize">Total Activities Monitored</h3>
+			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block"
 				>{stats.total_monitored_change}</span
 			>
 		</div>
@@ -452,10 +450,10 @@
 			</div>
 		</div>
 		<div class="mt-4">
-			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-				Ongoing Activities
-			</h3>
-			<span class="text-[11px] font-bold text-amber-600 mt-1 block">{stats.nearing_deadline}</span>
+			<h3 class="text-xs font-bold text-slate-900 capitalize">Ongoing Activities</h3>
+			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block">
+				{stats.nearing_deadline}
+			</span>
 		</div>
 	</div>
 
@@ -484,11 +482,10 @@
 			</div>
 		</div>
 		<div class="mt-4">
-			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-				Completed Activities
-			</h3>
-			<span class="text-[11px] font-bold text-emerald-600 mt-1 block">{stats.completed_change}</span
-			>
+			<h3 class="text-xs font-bold text-slate-900 capitalize">Completed Activities</h3>
+			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block">
+				{stats.completed_change}
+			</span>
 		</div>
 	</div>
 
@@ -517,10 +514,10 @@
 			</div>
 		</div>
 		<div class="mt-4">
-			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-				Pending Verification
-			</h3>
-			<span class="text-[11px] font-bold text-rose-600 mt-1 block">{stats.requires_review}</span>
+			<h3 class="text-xs font-bold text-slate-900 capitalize">Pending Verification</h3>
+			<span class="text-[10px] font-bold text-[#8fa3bb] uppercase tracking-wider mt-0.5 block">
+				{stats.requires_review}
+			</span>
 		</div>
 	</div>
 </section>

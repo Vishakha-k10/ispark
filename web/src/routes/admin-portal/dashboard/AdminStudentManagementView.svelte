@@ -431,7 +431,7 @@
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 21c-2.316 0-4.445-.69-6.22-1.879v-.003a4.125 4.125 0 0 1 7.533-2.493M15 19.128v-.003c0-1.112-.285-2.16-.786-3.07M14.214 16.058A9.396 9.396 0 0 0 10.089 15c-1.47 0-2.854.34-4.082.945M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+							d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
 						/>
 					</svg>
 				</div>
@@ -469,7 +469,7 @@
 			</div>
 			<div class="mt-4">
 				<h3 class="text-xs font-bold tracking-wide text-slate-800">Active Students</h3>
-				<p class="mt-1 text-[10px] font-bold tracking-wider text-emerald-500 uppercase">
+				<p class="mt-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
 					{activeStudents} on engagement
 				</p>
 			</div>
@@ -500,7 +500,7 @@
 			</div>
 			<div class="mt-4">
 				<h3 class="text-xs font-bold tracking-wide text-slate-800">Pending Certificate Reviews</h3>
-				<p class="mt-1 text-[10px] font-bold tracking-wider text-amber-500 uppercase">
+				<p class="mt-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
 					3 marked urgent
 				</p>
 			</div>
@@ -546,17 +546,14 @@
 		>
 			<div class="border-b border-slate-100 bg-slate-50/20 p-5">
 				<h2 class="text-inst-navy font-serif text-sm font-bold">Student Overview</h2>
-				<p class="mt-0.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-					Key performance profiles of enrolled students
-				</p>
 			</div>
 			<div class="grid flex-grow auto-rows-fr grid-cols-1 gap-4 p-5 sm:grid-cols-2">
 				<!-- Top Performer -->
 				<div
-					class="border-slate-150 flex items-center gap-3 rounded-xl border bg-slate-50 p-4 transition-shadow hover:shadow-sm"
+					class="flex items-center gap-4 rounded-xl border border-slate-300/70 bg-white p-5 shadow-2xs transition-shadow hover:shadow-sm"
 				>
 					<div
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-100 text-yellow-600"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-yellow-200 bg-amber-50 text-amber-500"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -564,7 +561,7 @@
 							viewBox="0 0 24 24"
 							stroke-width="2"
 							stroke="currentColor"
-							class="h-4 w-4"
+							class="h-5 w-5"
 						>
 							<path
 								stroke-linecap="round"
@@ -574,13 +571,13 @@
 						</svg>
 					</div>
 					<div class="flex min-w-0 flex-col gap-0.5">
-						<span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase"
-							>Top Performer</span
+						<span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
+							>TOP PERFORMER</span
 						>
-						<span class="truncate text-sm font-bold text-slate-900">
+						<span class="truncate text-base font-bold text-slate-900">
 							{topPerformer?.name || 'Waiting for data...'}
 						</span>
-						<span class="text-[10px] font-semibold text-slate-500">
+						<span class="text-xs font-semibold text-slate-500">
 							{topPerformer?.creditsEarned || 0} credits · {topPerformer?.department || '...'}
 						</span>
 					</div>
@@ -588,10 +585,10 @@
 
 				<!-- Highest Credits Earned -->
 				<div
-					class="border-slate-150 flex items-center gap-3 rounded-xl border bg-slate-50 p-4 transition-shadow hover:shadow-sm"
+					class="flex items-center gap-4 rounded-xl border border-slate-300/70 bg-white p-5 shadow-2xs transition-shadow hover:shadow-sm"
 				>
 					<div
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-100 text-emerald-600"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-500"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -599,7 +596,7 @@
 							viewBox="0 0 24 24"
 							stroke-width="2"
 							stroke="currentColor"
-							class="h-4 w-4"
+							class="h-5 w-5"
 						>
 							<path
 								stroke-linecap="round"
@@ -609,13 +606,13 @@
 						</svg>
 					</div>
 					<div class="flex min-w-0 flex-col gap-0.5">
-						<span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase"
-							>Highest Credits Earned</span
+						<span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
+							>HIGHEST CREDITS EARNED</span
 						>
-						<span class="truncate text-sm font-bold text-slate-900">
+						<span class="truncate text-base font-bold text-slate-900">
 							{highestCredits?.name || 'Waiting for data...'}
 						</span>
-						<span class="text-[10px] font-semibold text-slate-500">
+						<span class="text-xs font-semibold text-slate-500">
 							{highestCredits?.creditsEarned || 0} credits earned this batch
 						</span>
 					</div>
@@ -623,10 +620,10 @@
 
 				<!-- Most Active Student -->
 				<div
-					class="border-slate-150 flex items-center gap-3 rounded-xl border bg-slate-50 p-4 transition-shadow hover:shadow-sm"
+					class="flex items-center gap-4 rounded-xl border border-slate-300/70 bg-white p-5 shadow-2xs transition-shadow hover:shadow-sm"
 				>
 					<div
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-100 text-blue-600"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-500"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -634,7 +631,7 @@
 							viewBox="0 0 24 24"
 							stroke-width="2"
 							stroke="currentColor"
-							class="h-4 w-4"
+							class="h-5 w-5"
 						>
 							<path
 								stroke-linecap="round"
@@ -644,13 +641,13 @@
 						</svg>
 					</div>
 					<div class="flex min-w-0 flex-col gap-0.5">
-						<span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase"
-							>Most Active Student</span
+						<span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
+							>MOST ACTIVE STUDENT</span
 						>
-						<span class="truncate text-sm font-bold text-slate-900">
+						<span class="truncate text-base font-bold text-slate-900">
 							{mostActive?.name || 'Waiting for data...'}
 						</span>
-						<span class="text-[10px] font-semibold text-slate-500">
+						<span class="text-xs font-semibold text-slate-500">
 							{mostActive?.activityCount || 0} activities logged
 						</span>
 					</div>
@@ -658,10 +655,10 @@
 
 				<!-- Requiring Attention -->
 				<div
-					class="flex items-center gap-3 rounded-xl border border-rose-100 bg-rose-50/60 p-4 transition-shadow hover:shadow-sm"
+					class="flex items-center gap-4 rounded-xl border border-rose-200/80 bg-rose-50/50 p-5 shadow-2xs transition-shadow hover:shadow-sm"
 				>
 					<div
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-rose-200 bg-rose-100 text-rose-600"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-rose-200 bg-rose-100 text-rose-600"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -669,7 +666,7 @@
 							viewBox="0 0 24 24"
 							stroke-width="2"
 							stroke="currentColor"
-							class="h-4 w-4"
+							class="h-5 w-5"
 						>
 							<path
 								stroke-linecap="round"
@@ -679,15 +676,18 @@
 						</svg>
 					</div>
 					<div class="flex min-w-0 flex-col gap-0.5">
-						<span class="text-[9px] font-bold tracking-wider text-rose-400 uppercase"
-							>Requiring Attention</span
+						<span class="text-[10px] font-bold tracking-wider text-rose-500 uppercase"
+							>REQUIRING ATTENTION</span
 						>
-						<span class="text-sm font-bold text-rose-700">{pendingAttention.length} students</span>
-						<span class="text-[10px] font-semibold text-rose-500">
-							{pendingAttention
-								.slice(0, 4)
-								.map((s) => s.name.split(' ')[0])
-								.join(', ')}
+						<span class="text-base font-bold text-rose-700">{pendingAttention.length} students</span
+						>
+						<span class="text-xs font-semibold text-rose-500">
+							{pendingAttention.length > 0
+								? pendingAttention
+										.slice(0, 4)
+										.map((s) => s.name.split(' ')[0])
+										.join(', ')
+								: 'None'}
 						</span>
 					</div>
 				</div>
@@ -700,9 +700,6 @@
 		>
 			<div class="border-b border-slate-100 bg-slate-50/20 p-5">
 				<h2 class="text-inst-navy font-serif text-sm font-bold">Quick Insights</h2>
-				<p class="mt-0.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-					Administrative actions
-				</p>
 			</div>
 			<div class="space-y-3 p-4">
 				<!-- Pending certificates -->
@@ -1044,7 +1041,7 @@
 										<button
 											onclick={() => openStudentModal(student)}
 											aria-label="View student"
-											class="hover:text-inst-navy rounded-lg border border-slate-200 p-1.5 text-slate-500 transition-colors hover:bg-slate-100 focus:outline-none"
+											class="flex h-8 w-8 items-center justify-center rounded-2xl bg-[#881B1B]/10 text-[#881B1B] transition-colors hover:bg-[#881B1B]/20 focus:outline-none"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
