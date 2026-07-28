@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade, slide } from 'svelte/transition';
+	import { API_BASE_URL } from '$lib/config';
 
 	// Reactive filter states
 	let searchQuery = $state('');
@@ -7,202 +8,192 @@
 	let selectedStatus = $state('');
 	let sortBy = $state('');
 
-	// Mock Activity Data
-	let activities = $state([
-		{
-			id: 1,
-			name: 'Leadership Workshop',
-			category: 'Soft Skills',
-			credits: 10,
-			registered: 120,
-			completed: 108,
-			startDate: '01 Jan 2025',
-			endDate: '15 Jan 2025',
-			status: 'Completed'
-		},
-		{
-			id: 2,
-			name: 'Research Project',
-			category: 'Academic',
-			credits: 20,
-			registered: 45,
-			completed: 28,
-			startDate: '10 Feb 2025',
-			endDate: '30 Apr 2025',
-			status: 'Ongoing'
-		},
-		{
-			id: 3,
-			name: 'Community Service Drive',
-			category: 'Social',
-			credits: 8,
-			registered: 80,
-			completed: 77,
-			startDate: '05 Mar 2025',
-			endDate: '20 Mar 2025',
-			status: 'Completed'
-		},
-		{
-			id: 4,
-			name: 'Technical Symposium',
-			category: 'Technical',
-			credits: 12,
-			registered: 60,
-			completed: 42,
-			startDate: '01 Apr 2025',
-			endDate: '03 Apr 2025',
-			status: 'Pending Verification'
-		},
-		{
-			id: 5,
-			name: 'Cultural Fest Participation',
-			category: 'Co-curricular',
-			credits: 6,
-			registered: 95,
-			completed: 55,
-			startDate: '15 Apr 2025',
-			endDate: '17 Apr 2025',
-			status: 'Completed'
-		},
-		{
-			id: 6,
-			name: 'Industry Visit — Infosys',
-			category: 'Industry',
-			credits: 5,
-			registered: 35,
-			completed: 22,
-			startDate: '02 May 2025',
-			endDate: '02 May 2025',
-			status: 'Ongoing'
-		},
-		{
-			id: 7,
-			name: 'NSS Camp',
-			category: 'Social',
-			credits: 15,
-			registered: 50,
-			completed: 0,
-			startDate: '01 Jun 2025',
-			endDate: '07 Jun 2025',
-			status: 'Upcoming'
-		},
-		{
-			id: 8,
-			name: 'Sports Meet',
-			category: 'Sports',
-			credits: 4,
-			registered: 70,
-			completed: 68,
-			startDate: '20 Feb 2025',
-			endDate: '22 Feb 2025',
-			status: 'Pending Verification'
-		},
-		{
-			id: 9,
-			name: 'Entrepreneurship Bootcamp',
-			category: 'Soft Skills',
-			credits: 10,
-			registered: 30,
-			completed: 18,
-			startDate: '10 Mar 2025',
-			endDate: '12 Mar 2025',
-			status: 'Ongoing'
-		},
-		{
-			id: 10,
-			name: 'Hackathon 2025',
-			category: 'Technical',
-			credits: 18,
-			registered: 55,
-			completed: 40,
-			startDate: '08 Apr 2025',
-			endDate: '09 Apr 2025',
-			status: 'Completed'
-		}
-	]);
+	let loading = $state(true);
 
-	// Mock Students Requiring Attention Data
-	let attentionStudents = $state([
-		{
-			id: 1,
-			name: 'Dev Mehta',
-			initials: 'DM',
-			enrollment: '21CS0071',
-			activity: 'Technical Symposium',
-			issue: 'Certificate Not Uploaded',
-			statusColor: 'text-rose-600 font-bold',
-			days: 14
-		},
-		{
-			id: 2,
-			name: 'Vikram Singh',
-			initials: 'VS',
-			enrollment: '21CE0042',
-			activity: 'Cultural Fest Participation',
-			issue: 'Activity Incomplete',
-			statusColor: 'text-amber-600 font-bold',
-			days: 21
-		},
-		{
-			id: 3,
-			name: 'Meera Iyer',
-			initials: 'MI',
-			enrollment: '21CS0090',
-			activity: 'Sports Meet',
-			issue: 'Pending Verification',
-			statusColor: 'text-blue-600 font-bold',
-			days: 7
-		},
-		{
-			id: 4,
-			name: 'Rohan Verma',
-			initials: 'RV',
-			enrollment: '21CS0058',
-			activity: 'Leadership Workshop',
-			issue: 'Certificate Not Uploaded',
-			statusColor: 'text-rose-600 font-bold',
-			days: 18
-		},
-		{
-			id: 5,
-			name: 'Priya Patel',
-			initials: 'PP',
-			enrollment: '21CC0033',
-			activity: 'Entrepreneurship Bootcamp',
-			issue: 'No Activity Participation',
-			statusColor: 'text-rose-600 font-bold',
-			days: 30
-		}
-	]);
+	let stats = $state({
+		total_monitored: 0,
+		total_monitored_change: '',
+		ongoing: 0,
+		nearing_deadline: '',
+		completed: 0,
+		completed_change: '',
+		pending_verification: 0,
+		requires_review: ''
+	});
+
+	interface ActivityItem {
+		id: number;
+		name: string;
+		category: string;
+		credits: number;
+		registered: number;
+		completed: number;
+		startDate: string;
+		endDate: string;
+		status: string;
+		coordinator?: string;
+		description?: string;
+	}
+
+	interface StudentItem {
+		id: number;
+		name: string;
+		initials: string;
+		enrollment: string;
+		activity: string;
+		issue: string;
+		statusColor: string;
+		days: number;
+		courseName?: string;
+		course_name?: string;
+		creditsEarned?: number;
+		credits_earned?: number;
+	}
+
+	interface MonitoringInsights {
+		most_participated: { name: string; count: number } | null;
+		highest_credit: { name: string; credits: number } | null;
+		highest_completion: { name: string; rate: number } | null;
+		students_requiring_followup: { count: number; activity_count: number } | null;
+		pending_certificates: number;
+		below_credit_target: number;
+		inactive_students: number;
+		activities_pending_review: number;
+	}
+
+	let insights = $state<MonitoringInsights>({
+		most_participated: null,
+		highest_credit: null,
+		highest_completion: null,
+		students_requiring_followup: { count: 0, activity_count: 0 },
+		pending_certificates: 0,
+		below_credit_target: 0,
+		inactive_students: 0,
+		activities_pending_review: 0
+	});
+
+	let activities = $state<ActivityItem[]>([]);
+
+	let attentionStudents = $state<StudentItem[]>([]);
 
 	// Modals & Details states
 	let isViewModalOpen = $state(false);
 	let isManageModalOpen = $state(false);
 	let isStudentModalOpen = $state(false);
-	let activeActivity = $state<(typeof activities)[0] | null>(null);
-	let activeStudent = $state<(typeof attentionStudents)[0] | null>(null);
+	let activeActivity = $state<ActivityItem | null>(null);
+	let activeStudent = $state<StudentItem | null>(null);
 
 	// Toasts notifications states
 	interface Toast {
 		id: number;
 		message: string;
+		type?: 'success' | 'error';
 	}
 	let toasts = $state<Toast[]>([]);
 	let toastCounter = 0;
 
-	function triggerToast(message: string) {
+	function triggerToast(message: string, type: 'success' | 'error' = 'success') {
 		const id = toastCounter++;
-		toasts = [...toasts, { id, message }];
+		toasts = [...toasts, { id, message, type }];
 		setTimeout(() => {
 			toasts = toasts.filter((t) => t.id !== id);
 		}, 3500);
 	}
 
+	async function fetchStats() {
+		const token = localStorage.getItem('admin_token');
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/admin/monitoring/stats`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			});
+			if (res.ok) {
+				const data = await res.json();
+				stats = data;
+			}
+		} catch {
+			// keep fallback state
+		}
+	}
+
+	async function fetchActivities() {
+		const token = localStorage.getItem('admin_token');
+		loading = true;
+		try {
+			/* eslint-disable-next-line svelte/prefer-svelte-reactivity */
+			const params = new URLSearchParams();
+			if (searchQuery.trim()) params.append('search', searchQuery.trim());
+			if (selectedCategory && selectedCategory !== 'All Categories')
+				params.append('category', selectedCategory);
+			if (selectedStatus && selectedStatus !== 'All Statuses')
+				params.append('status', selectedStatus);
+			if (sortBy && sortBy !== 'default') params.append('sort_by', sortBy);
+
+			const res = await fetch(`${API_BASE_URL}/api/admin/monitoring/activities?${params}`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			});
+
+			if (res.ok) {
+				const data = await res.json();
+				activities = data;
+			}
+		} catch {
+			// keep current activities state
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function fetchInsights() {
+		const token = localStorage.getItem('admin_token');
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/admin/monitoring/insights`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			});
+			if (res.ok) {
+				const data = await res.json();
+				insights = data;
+			}
+		} catch {
+			// keep fallback state
+		}
+	}
+
+	async function fetchAttentionStudents() {
+		const token = localStorage.getItem('admin_token');
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/admin/monitoring/attention-students`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			});
+			if (res.ok) {
+				const data = await res.json();
+				attentionStudents = data;
+			}
+		} catch {
+			// keep fallback state
+		}
+	}
+
+	$effect(() => {
+		fetchStats();
+		fetchActivities();
+		fetchInsights();
+		fetchAttentionStudents();
+	});
+
+	// Derived metrics
+	/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+	let totalRegisteredStudents = $derived(activities.reduce((sum, a) => sum + a.registered, 0));
+	/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+	let totalCompletedStudents = $derived(activities.reduce((sum, a) => sum + a.completed, 0));
+	/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+	let totalCreditsAwarded = $derived(
+		activities.reduce((sum, a) => sum + a.credits * a.completed, 0)
+	);
+
 	// Filter and Sort Computing
 	let filteredActivities = $derived.by(() => {
 		let list = [...activities];
 
-		// Filter by search query
 		if (searchQuery.trim() !== '') {
 			const query = searchQuery.toLowerCase();
 			list = list.filter(
@@ -211,17 +202,24 @@
 			);
 		}
 
-		// Filter by Category
-		if (selectedCategory !== '') {
-			list = list.filter((act) => act.category === selectedCategory);
+		if (selectedCategory !== '' && selectedCategory !== 'All Categories') {
+			const catLower = selectedCategory.toLowerCase();
+			list = list.filter(
+				(act) =>
+					act.category.toLowerCase().includes(catLower) ||
+					catLower.includes(act.category.toLowerCase())
+			);
 		}
 
-		// Filter by Status
-		if (selectedStatus !== '') {
-			list = list.filter((act) => act.status === selectedStatus);
+		if (selectedStatus !== '' && selectedStatus !== 'All Statuses') {
+			const statLower = selectedStatus.toLowerCase();
+			list = list.filter(
+				(act) =>
+					act.status.toLowerCase().includes(statLower) ||
+					statLower.includes(act.status.toLowerCase())
+			);
 		}
 
-		// Sort by Option
 		if (sortBy === 'credits-desc') {
 			list.sort((a, b) => b.credits - a.credits);
 		} else if (sortBy === 'credits-asc') {
@@ -229,40 +227,108 @@
 		} else if (sortBy === 'registered-desc') {
 			list.sort((a, b) => b.registered - a.registered);
 		} else if (sortBy === 'completion-desc') {
-			list.sort((a, b) => b.completed / b.registered - a.completed / a.registered);
+			list.sort(
+				(a, b) =>
+					(b.registered > 0 ? b.completed / b.registered : 0) -
+					(a.registered > 0 ? a.completed / a.registered : 0)
+			);
 		}
 
 		return list;
 	});
 
-	function handleViewActivity(act: (typeof activities)[0]) {
+	/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+	function resetFilters() {
+		searchQuery = '';
+		selectedCategory = 'All Categories';
+		selectedStatus = 'All Statuses';
+		sortBy = 'default';
+	}
+
+	function handleViewActivity(act: ActivityItem) {
 		activeActivity = act;
 		isViewModalOpen = true;
 	}
 
-	function handleManageActivity(act: (typeof activities)[0]) {
+	function handleManageActivity(act: ActivityItem) {
 		activeActivity = { ...act }; // copy state for editing
 		isManageModalOpen = true;
 	}
 
-	function handleSaveActivityChanges() {
-		if (activeActivity) {
-			const idx = activities.findIndex((a) => a.id === activeActivity!.id);
-			if (idx !== -1) {
-				activities[idx] = { ...activeActivity! };
-				triggerToast(`Activity "${activeActivity!.name}" updated successfully.`);
+	async function handleSaveActivityChanges() {
+		if (!activeActivity) return;
+		const token = localStorage.getItem('admin_token');
+		try {
+			const res = await fetch(
+				`${API_BASE_URL}/api/admin/monitoring/activities/${activeActivity.id}`,
+				{
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
+					},
+					body: JSON.stringify({
+						name: activeActivity.name,
+						category: activeActivity.category,
+						credits: activeActivity.credits,
+						status: activeActivity.status,
+						startDate: activeActivity.startDate,
+						endDate: activeActivity.endDate,
+						coordinator: activeActivity.coordinator
+					})
+				}
+			);
+
+			if (res.ok) {
+				const data = await res.json();
+				triggerToast(
+					data.message || `Activity "${activeActivity.name}" updated successfully.`,
+					'success'
+				);
+				await fetchActivities();
+				await fetchStats();
+				isManageModalOpen = false;
+			} else {
+				const errData = await res.json().catch(() => ({}));
+				triggerToast(errData.error || errData.message || 'Failed to update activity', 'error');
 			}
+		} catch {
+			triggerToast(`Network error: Failed to update activity "${activeActivity.name}".`, 'error');
 		}
-		isManageModalOpen = false;
 	}
 
-	function handleSendReminder(student: (typeof attentionStudents)[0]) {
-		triggerToast(
-			`Reminder alert sent to ${student.name} (${student.enrollment}) for ${student.activity}.`
-		);
+	async function handleSendReminder(student: StudentItem) {
+		const token = localStorage.getItem('admin_token');
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/admin/monitoring/send-reminder`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify({
+					student_enrollment: student.enrollment,
+					activity_name: student.activity,
+					issue: student.issue
+				})
+			});
+
+			if (res.ok) {
+				const data = await res.json();
+				triggerToast(data.message || `Reminder alert sent to ${student.name}.`, 'success');
+			} else {
+				const errData = await res.json().catch(() => ({}));
+				triggerToast(
+					errData.error || errData.message || `Failed to send reminder alert to ${student.name}`,
+					'error'
+				);
+			}
+		} catch {
+			triggerToast(`Network error: Failed to send reminder to ${student.name}.`, 'error');
+		}
 	}
 
-	function handleViewStudent(student: (typeof attentionStudents)[0]) {
+	function handleViewStudent(student: StudentItem) {
 		activeStudent = student;
 		isStudentModalOpen = true;
 	}
@@ -280,22 +346,43 @@
 	{#each toasts as toast (toast.id)}
 		<div
 			transition:slide={{ duration: 150 }}
-			class="p-4 bg-slate-800 border border-slate-700 text-white rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold font-sans"
+			class={`p-4 border rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold font-sans ${
+				toast.type === 'error'
+					? 'bg-slate-900 border-rose-500/60 text-rose-200'
+					: 'bg-slate-800 border-slate-700 text-white'
+			}`}
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke="currentColor"
-				class="w-4 h-4 text-accent-gold"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z"
-				/>
-			</svg>
+			{#if toast.type === 'error'}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					class="w-4 h-4 text-rose-400 shrink-0"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+					/>
+				</svg>
+			{:else}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					class="w-4 h-4 text-accent-gold shrink-0"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z"
+					/>
+				</svg>
+			{/if}
 			<span>{toast.message}</span>
 		</div>
 	{/each}
@@ -311,7 +398,7 @@
 		class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow"
 	>
 		<div class="flex items-center justify-between">
-			<span class="text-2xl font-bold font-serif text-slate-900">138</span>
+			<span class="text-2xl font-bold font-serif text-slate-900">{stats.total_monitored}</span>
 			<div class="p-2.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
 				<!-- Chart line icon -->
 				<svg
@@ -334,7 +421,9 @@
 			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
 				Total Activities Monitored
 			</h3>
-			<span class="text-[11px] font-bold text-emerald-600 mt-1 block">+12 this week</span>
+			<span class="text-[11px] font-bold text-emerald-600 mt-1 block"
+				>{stats.total_monitored_change}</span
+			>
 		</div>
 	</div>
 
@@ -343,7 +432,7 @@
 		class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow"
 	>
 		<div class="flex items-center justify-between">
-			<span class="text-2xl font-bold font-serif text-slate-900">24</span>
+			<span class="text-2xl font-bold font-serif text-slate-900">{stats.ongoing}</span>
 			<div class="p-2.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-100">
 				<!-- Clock icon -->
 				<svg
@@ -366,7 +455,7 @@
 			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
 				Ongoing Activities
 			</h3>
-			<span class="text-[11px] font-bold text-amber-600 mt-1 block">5 nearing deadline</span>
+			<span class="text-[11px] font-bold text-amber-600 mt-1 block">{stats.nearing_deadline}</span>
 		</div>
 	</div>
 
@@ -375,7 +464,7 @@
 		class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow"
 	>
 		<div class="flex items-center justify-between">
-			<span class="text-2xl font-bold font-serif text-slate-900">96</span>
+			<span class="text-2xl font-bold font-serif text-slate-900">{stats.completed}</span>
 			<div class="p-2.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
 				<!-- Checkmark Shield icon -->
 				<svg
@@ -398,7 +487,8 @@
 			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
 				Completed Activities
 			</h3>
-			<span class="text-[11px] font-bold text-emerald-600 mt-1 block">+8 this month</span>
+			<span class="text-[11px] font-bold text-emerald-600 mt-1 block">{stats.completed_change}</span
+			>
 		</div>
 	</div>
 
@@ -407,7 +497,7 @@
 		class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow"
 	>
 		<div class="flex items-center justify-between">
-			<span class="text-2xl font-bold font-serif text-slate-900">18</span>
+			<span class="text-2xl font-bold font-serif text-slate-900">{stats.pending_verification}</span>
 			<div class="p-2.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
 				<!-- Exclamation warning icon -->
 				<svg
@@ -430,7 +520,7 @@
 			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
 				Pending Verification
 			</h3>
-			<span class="text-[11px] font-bold text-rose-600 mt-1 block">Requires review</span>
+			<span class="text-[11px] font-bold text-rose-600 mt-1 block">{stats.requires_review}</span>
 		</div>
 	</div>
 </section>
@@ -442,7 +532,7 @@
 		<span
 			class="bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded"
 		>
-			138 Activities
+			{filteredActivities.length} Activities
 		</span>
 	</div>
 
@@ -452,6 +542,7 @@
 			<input
 				type="text"
 				bind:value={searchQuery}
+				oninput={() => fetchActivities()}
 				placeholder="Search Activity..."
 				class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-800 bg-white focus:outline-none focus:border-slate-355"
 			/>
@@ -476,21 +567,26 @@
 		<!-- Category dropdown -->
 		<select
 			bind:value={selectedCategory}
+			onchange={() => fetchActivities()}
 			class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 bg-white focus:outline-none focus:border-slate-355"
 		>
 			<option value="">All Categories</option>
+			<option value="Leadership">Leadership</option>
+			<option value="Cultural">Cultural</option>
+			<option value="Public Speaking">Public Speaking</option>
+			<option value="Social Service">Social Service</option>
+			<option value="Technical">Technical</option>
+			<option value="Sports">Sports</option>
 			<option value="Soft Skills">Soft Skills</option>
 			<option value="Academic">Academic</option>
-			<option value="Social">Social</option>
-			<option value="Technical">Technical</option>
 			<option value="Co-curricular">Co-curricular</option>
 			<option value="Industry">Industry</option>
-			<option value="Sports">Sports</option>
 		</select>
 
 		<!-- Status dropdown -->
 		<select
 			bind:value={selectedStatus}
+			onchange={() => fetchActivities()}
 			class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 bg-white focus:outline-none focus:border-slate-355"
 		>
 			<option value="">All Statuses</option>
@@ -503,6 +599,7 @@
 		<!-- Sorting dropdown -->
 		<select
 			bind:value={sortBy}
+			onchange={() => fetchActivities()}
 			class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 bg-white focus:outline-none focus:border-slate-355"
 		>
 			<option value="">Sort By</option>
@@ -533,117 +630,147 @@
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-slate-100 text-xs font-sans">
-				{#each filteredActivities as act (act.id)}
-					{@const progress =
-						act.registered > 0 ? Math.round((act.completed / act.registered) * 100) : 0}
-					<tr class="hover:bg-slate-50/40 transition-colors">
-						<td class="py-4 px-5 font-bold text-slate-850">{act.name}</td>
-						<td class="py-4 px-5 text-slate-500 font-semibold">{act.category}</td>
-						<td class="py-4 px-5 font-extrabold text-slate-900">{act.credits}</td>
-						<td class="py-4 px-5 text-slate-600 font-semibold">{act.registered}</td>
-						<td class="py-4 px-5 text-slate-600 font-semibold">{act.completed}</td>
-						<td class="py-4 px-5">
-							<div class="flex items-center gap-2">
-								<div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0">
-									<div
-										class="h-full rounded-full transition-all duration-300
-										{progress >= 85 ? 'bg-emerald-600' : progress >= 40 ? 'bg-amber-500' : 'bg-slate-350'}"
-										style="width: {progress}%"
-									></div>
-								</div>
-								<span class="font-extrabold text-slate-700 text-[10px] w-6 shrink-0"
-									>{progress}%</span
+				{#if loading}
+					<tr>
+						<td colspan="10" class="py-8 text-center text-slate-400 font-semibold">
+							<span class="inline-flex items-center gap-2">
+								<svg
+									class="animate-spin h-4 w-4 text-slate-400"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
 								>
-							</div>
-						</td>
-						<td class="py-4 px-5 text-slate-500 font-semibold">{act.startDate}</td>
-						<td class="py-4 px-5 text-slate-500 font-semibold">{act.endDate}</td>
-						<td class="py-4 px-5">
-							<span
-								class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wide border
-								{act.status === 'Completed'
-									? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-									: act.status === 'Ongoing'
-										? 'bg-blue-50 text-blue-700 border-blue-100'
-										: act.status === 'Pending Verification'
-											? 'bg-amber-50 text-amber-705 border-amber-100'
-											: 'bg-slate-50 text-slate-600 border-slate-200'}"
-							>
-								<span
-									class="w-1.5 h-1.5 rounded-full
-									{act.status === 'Completed'
-										? 'bg-emerald-600'
-										: act.status === 'Ongoing'
-											? 'bg-blue-600'
-											: act.status === 'Pending Verification'
-												? 'bg-amber-500'
-												: 'bg-slate-400'}"
-								></span>
-								{act.status}
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+									></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+								Loading activities...
 							</span>
 						</td>
-						<td class="py-4 px-5">
-							<div class="flex items-center justify-center gap-2">
-								<button
-									onclick={() => handleViewActivity(act)}
-									class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-[10px] uppercase rounded-lg transition-colors focus:outline-none"
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke-width="2"
-										stroke="currentColor"
-										class="w-3.5 h-3.5"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
-										/>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-										/>
-									</svg>
-									View
-								</button>
-								<button
-									onclick={() => handleManageActivity(act)}
-									class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-red text-white hover:bg-accent-red/90 font-extrabold text-[10px] uppercase rounded-lg transition-colors focus:outline-none"
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke-width="2"
-										stroke="currentColor"
-										class="w-3.5 h-3.5"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.828c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.43l1.004-.827c.292-.24.437-.613.43-.991a6.936 6.936 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
-										/>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-										/>
-									</svg>
-									Manage
-								</button>
-							</div>
-						</td>
 					</tr>
+				{:else if filteredActivities.length > 0}
+					{#each filteredActivities as act (act.id)}
+						{@const progress =
+							act.registered > 0 ? Math.round((act.completed / act.registered) * 100) : 0}
+						<tr class="hover:bg-slate-50/40 transition-colors">
+							<td class="py-4 px-5 font-bold text-slate-850">{act.name}</td>
+							<td class="py-4 px-5 text-slate-500 font-semibold">{act.category}</td>
+							<td class="py-4 px-5 font-extrabold text-slate-900">{act.credits}</td>
+							<td class="py-4 px-5 text-slate-600 font-semibold">{act.registered}</td>
+							<td class="py-4 px-5 text-slate-600 font-semibold">{act.completed}</td>
+							<td class="py-4 px-5">
+								<div class="flex items-center gap-2">
+									<div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0">
+										<div
+											class="h-full rounded-full transition-all duration-300
+											{progress >= 85 ? 'bg-emerald-600' : progress >= 40 ? 'bg-amber-500' : 'bg-slate-350'}"
+											style="width: {progress}%"
+										></div>
+									</div>
+									<span class="font-extrabold text-slate-700 text-[10px] w-6 shrink-0"
+										>{progress}%</span
+									>
+								</div>
+							</td>
+							<td class="py-4 px-5 text-slate-500 font-semibold">{act.startDate}</td>
+							<td class="py-4 px-5 text-slate-500 font-semibold">{act.endDate}</td>
+							<td class="py-4 px-5">
+								<span
+									class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wide border
+									{act.status === 'Completed'
+										? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+										: act.status === 'Ongoing'
+											? 'bg-blue-50 text-blue-700 border-blue-100'
+											: act.status === 'Pending Verification'
+												? 'bg-amber-50 text-amber-705 border-amber-100'
+												: 'bg-slate-50 text-slate-600 border-slate-200'}"
+								>
+									<span
+										class="w-1.5 h-1.5 rounded-full
+										{act.status === 'Completed'
+											? 'bg-emerald-600'
+											: act.status === 'Ongoing'
+												? 'bg-blue-600'
+												: act.status === 'Pending Verification'
+													? 'bg-amber-500'
+													: 'bg-slate-400'}"
+									></span>
+									{act.status}
+								</span>
+							</td>
+							<td class="py-4 px-5">
+								<div class="flex items-center justify-center gap-2">
+									<button
+										onclick={() => handleViewActivity(act)}
+										class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-[10px] uppercase rounded-lg transition-colors focus:outline-none"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke-width="2"
+											stroke="currentColor"
+											class="w-3.5 h-3.5"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+											/>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+											/>
+										</svg>
+										View
+									</button>
+									<button
+										onclick={() => handleManageActivity(act)}
+										class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-red text-white hover:bg-accent-red/90 font-extrabold text-[10px] uppercase rounded-lg transition-colors focus:outline-none"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke-width="2"
+											stroke="currentColor"
+											class="w-3.5 h-3.5"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.828c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.43l1.004-.827c.292-.24.437-.613.43-.991a6.936 6.936 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
+											/>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+											/>
+										</svg>
+										Manage
+									</button>
+								</div>
+							</td>
+						</tr>
+					{/each}
 				{:else}
 					<tr>
 						<td colspan="10" class="py-8 text-center text-slate-400 font-semibold">
 							No activities found matching your criteria.
 						</td>
 					</tr>
-				{/each}
+				{/if}
 			</tbody>
 		</table>
 	</div>
@@ -687,8 +814,12 @@
 					<span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block"
 						>Most Participated Activity</span
 					>
-					<span class="text-xs font-bold text-slate-800 block mt-0.5">Leadership Workshop</span>
-					<span class="text-[10px] text-slate-500 font-semibold block mt-0.5">120 students</span>
+					<span class="text-xs font-bold text-slate-800 block mt-0.5"
+						>{insights?.most_participated?.name || 'N/A'}</span
+					>
+					<span class="text-[10px] text-slate-500 font-semibold block mt-0.5"
+						>{insights?.most_participated?.count ?? 0} students</span
+					>
 				</div>
 			</div>
 
@@ -716,8 +847,12 @@
 					<span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block"
 						>Highest Credit Activity</span
 					>
-					<span class="text-xs font-bold text-slate-800 block mt-0.5">Research Project</span>
-					<span class="text-[10px] text-slate-500 font-semibold block mt-0.5">20 credits</span>
+					<span class="text-xs font-bold text-slate-800 block mt-0.5"
+						>{insights?.highest_credit?.name || 'N/A'}</span
+					>
+					<span class="text-[10px] text-slate-500 font-semibold block mt-0.5"
+						>{insights?.highest_credit?.credits ?? 0} credits</span
+					>
 				</div>
 			</div>
 
@@ -747,8 +882,12 @@
 					<span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block"
 						>Highest Completion Rate</span
 					>
-					<span class="text-xs font-bold text-slate-800 block mt-0.5">Community Service Drive</span>
-					<span class="text-[10px] text-slate-500 font-semibold block mt-0.5">96% completion</span>
+					<span class="text-xs font-bold text-slate-800 block mt-0.5"
+						>{insights?.highest_completion?.name || 'N/A'}</span
+					>
+					<span class="text-[10px] text-slate-500 font-semibold block mt-0.5"
+						>{insights?.highest_completion?.rate ?? 0}% completion</span
+					>
 				</div>
 			</div>
 
@@ -776,9 +915,11 @@
 					<span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block"
 						>Students Requiring Follow-up</span
 					>
-					<span class="text-xs font-bold text-slate-800 block mt-0.5">8 students</span>
+					<span class="text-xs font-bold text-slate-800 block mt-0.5"
+						>{insights?.students_requiring_followup?.count ?? 0} students</span
+					>
 					<span class="text-[10px] text-slate-500 font-semibold block mt-0.5"
-						>across 3 activities</span
+						>across {insights?.students_requiring_followup?.activity_count ?? 0} activities</span
 					>
 				</div>
 			</div>
@@ -803,28 +944,28 @@
 					<span>Students with pending certificates</span>
 					<span
 						class="w-7 h-7 bg-rose-50 border border-rose-100 text-rose-700 font-extrabold flex items-center justify-center rounded-full"
-						>12</span
+						>{insights.pending_certificates}</span
 					>
 				</div>
 				<div class="py-3 flex items-center justify-between">
 					<span>Students below credit target</span>
 					<span
 						class="w-7 h-7 bg-amber-50 border border-amber-100 text-amber-700 font-extrabold flex items-center justify-center rounded-full"
-						>5</span
+						>{insights.below_credit_target}</span
 					>
 				</div>
 				<div class="py-3 flex items-center justify-between">
 					<span>Inactive students (30+ days)</span>
 					<span
 						class="w-7 h-7 bg-slate-100 border border-slate-250 text-slate-700 font-extrabold flex items-center justify-center rounded-full"
-						>3</span
+						>{insights.inactive_students}</span
 					>
 				</div>
 				<div class="py-3 flex items-center justify-between">
 					<span>Activities pending review</span>
 					<span
 						class="w-7 h-7 bg-slate-100 border border-slate-250 text-slate-700 font-extrabold flex items-center justify-center rounded-full"
-						>7</span
+						>{insights.activities_pending_review}</span
 					>
 				</div>
 			</div>
@@ -865,51 +1006,88 @@
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-slate-100 text-xs font-sans">
-				{#each attentionStudents as stud (stud.id)}
-					<tr class="hover:bg-slate-50/40 transition-colors">
-						<td class="py-4 px-5">
-							<div class="flex items-center gap-3">
-								<span
-									class="w-8 h-8 rounded-full bg-[#881B1B]/10 text-[#881B1B] font-serif font-extrabold flex items-center justify-center shrink-0 border border-[#881B1B]/20 text-[11px]"
+				{#if loading}
+					<tr>
+						<td colspan="6" class="py-8 text-center text-slate-400 font-semibold">
+							<span class="inline-flex items-center gap-2">
+								<svg
+									class="animate-spin h-4 w-4 text-slate-400"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
 								>
-									{stud.initials}
-								</span>
-								<span class="font-bold text-slate-850">{stud.name}</span>
-							</div>
-						</td>
-						<td class="py-4 px-5 font-semibold text-slate-500 select-all">{stud.enrollment}</td>
-						<td class="py-4 px-5 font-bold text-slate-700">{stud.activity}</td>
-						<td class="py-4 px-5">
-							<span class="inline-flex items-center gap-1.5 {stud.statusColor}">
-								{#if stud.issue.includes('Not Uploaded') || stud.issue.includes('No Activity')}
-									<span class="w-1.5 h-1.5 bg-rose-600 rounded-full shrink-0 animate-pulse"></span>
-								{:else if stud.issue.includes('Incomplete')}
-									<span class="w-1.5 h-1.5 bg-amber-500 rounded-full shrink-0"></span>
-								{:else}
-									<span class="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0"></span>
-								{/if}
-								{stud.issue}
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+									></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+								Loading students...
 							</span>
 						</td>
-						<td class="py-4 px-5 font-extrabold text-slate-900">{stud.days} days</td>
-						<td class="py-4 px-5">
-							<div class="flex items-center justify-center gap-2">
-								<button
-									onclick={() => handleViewStudent(stud)}
-									class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-[10px] uppercase rounded-lg transition-colors focus:outline-none"
-								>
-									View Profile
-								</button>
-								<button
-									onclick={() => handleSendReminder(stud)}
-									class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 font-extrabold text-[10px] uppercase rounded-lg transition-colors focus:outline-none"
-								>
-									Send Reminder
-								</button>
-							</div>
+					</tr>
+				{:else if attentionStudents.length > 0}
+					{#each attentionStudents as stud (stud.id)}
+						<tr class="hover:bg-slate-50/40 transition-colors">
+							<td class="py-4 px-5">
+								<div class="flex items-center gap-3">
+									<span
+										class="w-8 h-8 rounded-full bg-[#881B1B]/10 text-[#881B1B] font-serif font-extrabold flex items-center justify-center shrink-0 border border-[#881B1B]/20 text-[11px]"
+									>
+										{stud.initials}
+									</span>
+									<span class="font-bold text-slate-850">{stud.name}</span>
+								</div>
+							</td>
+							<td class="py-4 px-5 font-semibold text-slate-500 select-all">{stud.enrollment}</td>
+							<td class="py-4 px-5 font-bold text-slate-700">{stud.activity}</td>
+							<td class="py-4 px-5">
+								<span class="inline-flex items-center gap-1.5 {stud.statusColor}">
+									{#if stud.issue.includes('Not Uploaded') || stud.issue.includes('No Activity')}
+										<span class="w-1.5 h-1.5 bg-rose-600 rounded-full shrink-0 animate-pulse"
+										></span>
+									{:else if stud.issue.includes('Incomplete')}
+										<span class="w-1.5 h-1.5 bg-amber-500 rounded-full shrink-0"></span>
+									{:else}
+										<span class="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0"></span>
+									{/if}
+									{stud.issue}
+								</span>
+							</td>
+							<td class="py-4 px-5 font-extrabold text-slate-900">{stud.days} days</td>
+							<td class="py-4 px-5">
+								<div class="flex items-center justify-center gap-2">
+									<button
+										onclick={() => handleViewStudent(stud)}
+										class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-[10px] uppercase rounded-lg transition-colors focus:outline-none"
+									>
+										View Profile
+									</button>
+									<button
+										onclick={() => handleSendReminder(stud)}
+										class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 font-extrabold text-[10px] uppercase rounded-lg transition-colors focus:outline-none"
+									>
+										Send Reminder
+									</button>
+								</div>
+							</td>
+						</tr>
+					{/each}
+				{:else}
+					<tr>
+						<td colspan="6" class="py-8 text-center text-slate-400 font-semibold">
+							No students requiring attention at this time.
 						</td>
 					</tr>
-				{/each}
+				{/if}
 			</tbody>
 		</table>
 	</div>
@@ -1028,12 +1206,13 @@
 						>Co-ordinator / Faculty</span
 					>
 					<span class="text-xs font-bold text-slate-800 block mt-0.5"
-						>Dr. Rajesh Kumar (HOD, CS Department)</span
+						>{activeActivity.coordinator || 'Faculty Coordinator'}</span
 					>
-					<p class="text-[10px] text-slate-500 leading-relaxed mt-1 font-medium italic">
-						"This activity monitors students' extracurricular engagement and soft-skills
-						applications in academic events."
-					</p>
+					{#if activeActivity.description}
+						<p class="text-[10px] text-slate-500 leading-relaxed mt-1 font-medium">
+							{activeActivity.description}
+						</p>
+					{/if}
 				</div>
 			</div>
 
@@ -1139,28 +1318,32 @@
 					<div class="flex flex-col gap-1.5">
 						<label
 							for="edit-registered"
-							class="text-[10px] font-extrabold text-slate-600 tracking-wider"
-							>REGISTERED STUDENTS</label
+							class="text-[10px] font-extrabold text-slate-500 tracking-wider flex items-center gap-1"
+							>REGISTERED STUDENTS (DERIVED)</label
 						>
 						<input
 							id="edit-registered"
 							type="number"
-							bind:value={activeActivity.registered}
-							class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-slate-355"
+							readonly
+							disabled
+							value={activeActivity.registered}
+							class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-500 bg-slate-100/80 cursor-not-allowed select-none focus:outline-none"
 						/>
 					</div>
 
 					<div class="flex flex-col gap-1.5">
 						<label
 							for="edit-completed"
-							class="text-[10px] font-extrabold text-slate-600 tracking-wider"
-							>COMPLETED STUDENTS</label
+							class="text-[10px] font-extrabold text-slate-500 tracking-wider flex items-center gap-1"
+							>COMPLETED STUDENTS (DERIVED)</label
 						>
 						<input
 							id="edit-completed"
 							type="number"
-							bind:value={activeActivity.completed}
-							class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-slate-355"
+							readonly
+							disabled
+							value={activeActivity.completed}
+							class="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-500 bg-slate-100/80 cursor-not-allowed select-none focus:outline-none"
 						/>
 					</div>
 				</div>
@@ -1253,7 +1436,7 @@
 							>Enrolled Department</span
 						>
 						<span class="text-xs font-bold text-slate-800 block mt-0.5"
-							>IIPS, Computer Science Cell</span
+							>{activeStudent.courseName || activeStudent.course_name || 'IIPS Department'}</span
 						>
 					</div>
 					<div class="pt-2 border-t border-slate-150">
@@ -1261,7 +1444,7 @@
 							>Current Extracurricular Credits</span
 						>
 						<span class="text-xs font-extrabold text-[#881B1B] block mt-0.5"
-							>38 / 100 Credits completed</span
+							>{activeStudent.creditsEarned ?? activeStudent.credits_earned ?? 0} Credits completed</span
 						>
 					</div>
 				</div>

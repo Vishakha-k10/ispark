@@ -43,6 +43,7 @@ func SetupRoutes(app *fiber.App) {
 	student.Get("/enrollments", controllers.GetEnrollments)
 	student.Get("/dashboard/stats", controllers.GetDashboardStats)
 	student.Get("/marksheet", controllers.GetMarksheet)
+	student.Get("/notifications", controllers.GetStudentNotifications)
 
 	// Admin
 	api.Post("/admin/auth/login", controllers.AdminLogin)
@@ -83,6 +84,14 @@ func SetupRoutes(app *fiber.App) {
 	admin.Get("/batch-analytics", controllers.GetBatchAnalyticsOverview)
 	admin.Get("/batch-analytics/:batch", controllers.GetBatchDetail)
 	admin.Put("/batch-analytics/:batch", controllers.UpdateBatchAnalytics)
+
+	// Activity Monitoring API
+	admin.Get("/monitoring/stats", controllers.GetActivityMonitoringStats)
+	admin.Get("/monitoring/activities", controllers.GetMonitoredActivities)
+	admin.Put("/monitoring/activities/:id", controllers.UpdateMonitoredActivity)
+	admin.Get("/monitoring/insights", controllers.GetMonitoringInsights)
+	admin.Get("/monitoring/attention-students", controllers.GetStudentsRequiringAttention)
+	admin.Post("/monitoring/send-reminder", controllers.SendActivityMonitoringReminder)
 
 	// Platform-wide routes, super admin only
 	platform := admin.Group("/platform", middleware.RoleRequired("superadmin"))
